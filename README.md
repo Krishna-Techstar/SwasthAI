@@ -1,50 +1,67 @@
-# Welcome to your Expo app 👋
+# SwasthAI — AI-Powered Healthcare Platform
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A monorepo containing the SwasthAI mobile app, web dashboard, backend services, and shared packages.
 
-## Get started
+---
 
-1. Install dependencies
+## ⚠️ Design System Law
 
-   ```bash
-   npm install
-   ```
+All UI development must strictly follow the **SwasthAI Color System**.
 
-2. Start the app
+> 📖 **[`apps/mobile/COLOR_SYSTEM.md`](./apps/mobile/COLOR_SYSTEM.md)** — The canonical color bible. Read before touching any UI.
 
-   ```bash
-   npx expo start
-   ```
+**Core Identity:** Purple `#8B5CF6` · Background `#FAFAFC` · Cards `#FFFFFF`  
+**Prohibited:** Dark navy, teal, cyan, neon, Bootstrap blue, hospital green.
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Monorepo Structure
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+```
+apps/
+  mobile/          — Expo React Native app (Patient, Doctor, Nurse)
+  web-admin/       — Admin & Billing dashboard (web only)
+  web-billing/     — Billing portal (web only)
+  landing/         — Public marketing site
+  docs-site/       — Documentation
 
-## Get a fresh project
+packages/
+  ui/              — Shared component library
+  theme/           — Design tokens
+  api-client/      — Data fetching
+  auth/            — Authentication
+  types/           — Shared TypeScript types
+  ...
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+services/
+  api-gateway/     — Entry point for all backend traffic
+  ai-service/      — AI consultation engine
+  auth-service/    — Authentication & authorization
+  user-service/    — User management
+  consultation-service/
+  billing-service/
+  ...
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## Mobile App — Quick Start
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+cd apps/mobile
+npx expo start          # Web preview
+npx expo start --localhost   # Local network (phone on same Wi-Fi)
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+**To run on physical phone:** Ensure Wi-Fi network profile is set to **Private** in Windows settings, then scan the QR code with Expo Go.
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+## Key Design Files (Mobile)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+| File | Purpose |
+|---|---|
+| `apps/mobile/COLOR_SYSTEM.md` | **Canonical color law** — all UI must follow this |
+| `apps/mobile/DESIGN.md` | Full design system guidelines |
+| `apps/mobile/constants/doctorTheme.js` | JS theme object (doctor shell) |
+| `apps/mobile/tailwind.config.js` | NativeWind utility class tokens |

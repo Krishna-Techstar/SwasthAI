@@ -1,0 +1,65 @@
+# SwasthAI Mobile Onboarding - Implementation Plan
+
+This plan outlines the architecture and design strategy for generating the premium, AI-native mobile onboarding experience for SwasthAI using Google Stitch.
+
+## Goal Description
+To design and build a world-class, premium Login & Signup experience for the SwasthAI mobile app (targeting Patients, Doctors, and Nurses). The UI will embody an emotionally reassuring, minimalist, and modern aesthetic inspired by top-tier tech products like Apple Health, Stripe, and Linear.
+
+## Open Questions
+
+> [!IMPORTANT]
+> 1. **Typography Preference**: You mentioned modern typography like Inter, Roboto, or Outfit. I propose using **Inter** as the primary font for its pristine readability in healthcare contexts, with **Outfit** for premium display headings. Does this sound good?
+> 2. **Authentication Flow**: For "Continue with Phone" vs "Email" on the welcome screen, should the subsequent steps immediately trigger an OTP, or should we collect the password first as outlined in Step 2?
+> 3. **AI Personalization**: Should this step be mandatory for Patients but optional for Doctors/Nurses?
+
+## Proposed Changes
+
+We will leverage the Stitch MCP server to generate the UI components and screen compositions.
+
+### 1. Design System Configuration (Stitch)
+We will initialize a new Stitch project and configure the Design System to enforce the premium healthcare aesthetic:
+- **Primary Color**: `#5B5FEF`
+- **Accent Color**: `#8B7CFF`
+- **Semantic Colors**: Success (`#1FA971`), Warning (`#F59E0B`), Error (`#E5484D`)
+- **Surfaces**: Light Mode (`#FFFFFF`, `#F7F8FC` background) and Dark Mode (`#171C24`, `#0E1117` background)
+- **Border Radius**: Soft rounded corners (e.g., 16px - 24px for floating cards)
+- **Shadows**: Premium soft drop shadows for elevated surfaces
+- **Design MD**: Strict instructions to avoid generic enterprise layouts, use glassmorphism only for AI moments, and maintain maximum white space.
+
+### 2. Screen Generation Strategy
+
+We will generate the following screens sequentially, refining them with text prompts to ensure they meet the Dribbble/App Store feature quality bar:
+
+1. **Welcome & Role Selection Screen**
+   - Premium hero section with ambient AI waveform background.
+   - Social & Phone/Email login buttons.
+   - 3 floating, selectable role cards: Patient, Doctor, Nurse (with active glow states).
+   - *Note: Admin/Billing explicitly excluded.*
+
+2. **Basic Details Screen**
+   - Clean, floating-label inputs for Name, Email/Phone, and Password.
+   - Password strength meter and inline validation.
+
+3. **Dynamic Role-Based Forms**
+   - **Patient Form**: Core details + Health goals chips, wearable connection UI, AI symptoms preference.
+   - **Doctor Form**: Core details + Medical Registration, Specialization, and an elegant Document Upload card for verification.
+   - **Nurse Form**: Core details + License, Department, and Shift Preference chips.
+
+4. **Verification Flow**
+   - Minimalist OTP entry screen with auto-focus styling.
+   - Status tracking card for Doctor/Nurse credential review (e.g., Pending Review state).
+
+5. **AI Personalization (Premium Step)**
+   - Interactive language selection chips.
+   - Notification and AI assistance level sliders/toggles.
+
+## Verification Plan
+
+### Automated/Stitch Verification
+- Verify that the Design System is correctly applied across all generated screens.
+- Ensure the Stitch layout hierarchy is clean and exportable to React Native/Expo.
+
+### Manual Verification
+- Review the generated screens in the Stitch UI to confirm they achieve the desired "ambient, calm, and premium" aesthetic.
+- Verify that no Admin or Billing roles accidentally appear in the mobile flow.
+- Ensure the floating card layouts and gradients match the provided design specifications.

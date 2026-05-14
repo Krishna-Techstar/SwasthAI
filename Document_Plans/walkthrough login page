@@ -1,0 +1,108 @@
+# SwasthAI Mobile Onboarding Walkthrough
+
+We have successfully generated the complete, premium Login & Signup experience for the SwasthAI mobile platform using Stitch AI. The resulting interface is modern, AI-native, and investor-grade, built atop a sophisticated design system.
+
+All requested screens have been composed and are accessible within the Stitch project (`SwasthAI Mobile Onboarding`). 
+
+---
+
+## 1. Generated Screens & Layout Breakdown
+
+The onboarding flow is dynamically tailored to Patients, Doctors, and Nurses. Admin and Billing personas have been strictly excluded from this mobile flow, per your architectural change.
+
+| Screen | Target Persona | Key Elements |
+| :--- | :--- | :--- |
+| **Welcome & Role Selection** | All Users | Ambient AI waveform background, Social + Email/Phone login, 3 floating interactive cards for Role selection (Patient, Doctor, Nurse). |
+| **Basic Details** | All Users | Floating-label inputs (Name, Email/Phone, Password), password strength meter, soft primary color glow on focus. |
+| **Patient Signup** | Patient | Health goals chips, Wearable connection card (Apple Watch/Fitbit), AI Symptom Preference slider. |
+| **Doctor Signup** | Doctor | Medical Registration, Specialization dropdown, Premium Credential Upload Card, "Pending Verification" badge. |
+| **Nurse Signup** | Nurse | Nursing License Number, Hospital search, Shift preference interactive chips (Morning/Evening/Night). |
+| **Verification Flow** | Doctor, Nurse | Minimalist OTP entry boxes with auto-focus styling, Status Tracker card indicating credentials are under review. |
+| **AI Personalization** | All Users | Language preference chips, Notification toggles, AI Assistance Level slider (Minimal -> Proactive). |
+
+> [!TIP]
+> **View these screens in Stitch:** You can open your Stitch dashboard to interact with the generated project. The screens utilize the customized SwasthAI Design System (Deep purple-blue `#5B5FEF`, Inter/Outfit typography, and soft ambient drop shadows).
+
+---
+
+## 2. Design System & Component Architecture
+
+### Visual Identity
+- **Primary Color:** `#5B5FEF`
+- **Accent/Secondary:** `#8B7CFF`
+- **Background (Light):** `#F7F8FC`
+- **Surfaces (Light):** `#FFFFFF` with soft drop shadows.
+- **Typography:** **Outfit** (Display/Headlines) for an editorial feel, **Inter** (Body/Labels) for clinical readability.
+
+### Component Library Strategy
+- **Floating Cards:** 24px border radius with a very soft ambient shadow. 1px stroke (slightly darker than surface).
+- **Inputs:** No "Bootstrap" borders. Subtle background tint, 16px radius, glowing primary border on focus.
+- **AI Moments:** Glassmorphism style. Backdrop blur, semi-transparent surface, animated gradient border.
+- **Chips:** Pill-shaped, generous internal padding, used for Shift preferences, Health goals, and Languages.
+
+### Dark Mode Strategy
+- **Background (Dark):** `#0E1117`
+- **Surfaces (Dark):** `#171C24`
+- **Shadows:** Switch from soft drop shadows to subtle inner borders and lighting overlays to maintain depth without muddying the interface.
+
+---
+
+## 3. Interaction & Motion Notes
+
+To achieve the "App Store featured" quality, motion should be purposeful and buttery smooth.
+
+*   **Role Selection:** Tapping a role card should trigger a soft scale-down (`0.97`) with a subtle haptic pop. The selected card glows with the primary color, while unselected cards fade to 60% opacity.
+*   **Page Transitions:** Use shared element transitions (via Reanimated) where possible. The header should remain sticky (using a backdrop blur) while the form content slides in smoothly from the right.
+*   **AI Form Elements:** When selecting AI preferences (like Health Goals), trigger a subtle, slow-moving ambient gradient sweep across the card to indicate intelligent processing.
+*   **OTP Auto-focus:** The active OTP box should subtly pulse its border color, and successful entry should trigger a soft green success check animation.
+
+---
+
+## 4. Frontend Architecture Suggestions (React Native & Expo)
+
+To implement this UI faithfully, we recommend the following stack:
+
+> [!IMPORTANT]
+> **Tech Stack Selection**
+> *   **Framework:** Expo Router (file-based routing for smooth multi-step onboarding).
+> *   **Styling:** NativeWind (Tailwind for RN) combined with custom Design Tokens.
+> *   **Motion:** `react-native-reanimated` (for 60fps gesture and layout animations).
+> *   **Forms & Validation:** `react-hook-form` paired with `zod` for robust, type-safe validation.
+> *   **State Management:** Zustand (lightweight, perfect for multi-step form data collection).
+
+### Validation Strategy (Zod)
+Create separate Zod schemas for each role:
+```typescript
+const PatientSchema = z.object({
+  fullName: z.string().min(2),
+  email: z.string().email(),
+  password: z.string().min(8).regex(/[A-Z]/, 'Needs uppercase'),
+  healthGoals: z.array(z.string()).optional()
+});
+
+const DoctorSchema = PatientSchema.extend({
+  medicalRegNumber: z.string().min(5),
+  specialization: z.string()
+  // ID Upload is handled via multipart/form-data separately
+});
+```
+
+---
+
+## 5. API & Security Architecture
+
+The authentication backend should be robust enough for healthcare compliance while feeling frictionless.
+
+*   **Authentication Flow:** Use JWTs with short-lived access tokens (15m) and HTTP-only refresh tokens (if interacting with web APIs) or secure enclave storage (Keychain/Keystore) on mobile.
+*   **Role-Based Access Control (RBAC):** The JWT payload should contain `role: 'PATIENT' | 'DOCTOR' | 'NURSE'`. Middleware on the backend will block Doctors/Nurses from accessing endpoints until their `verificationStatus` is `APPROVED`.
+*   **Document Verification Workflow:**
+    1.  Doctor uploads Government ID to an S3 bucket (via pre-signed URL).
+    2.  Backend triggers a webhook to the Admin Dashboard.
+    3.  Admin reviews and approves.
+    4.  Firebase/Supabase real-time listener on the mobile app instantly transitions the Doctor from the "Pending Verification" screen to the main "Clinical Insights" dashboard.
+*   **Security Must-Haves:** OTP verification for all signups, BCrypt password hashing, and comprehensive Audit Logs for any role changes or document accesses.
+
+---
+
+## Conclusion
+The generated onboarding flow successfully bridges the gap between clinical necessity and consumer-grade elegance. The design artifacts in Stitch are ready to be exported and built using your React Native/Expo architecture.

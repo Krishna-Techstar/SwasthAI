@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+/* SwasthAI Admin - Soft premium purple system */
+
+:root {
+  --background: #FAFAFC;
+  --foreground: #111827;
+  --sidebar: #FFFFFF;
+  --surface: #FFFFFF;
+  --elevated: #FFFFFF;
+  --card: #FFFFFF;
+  --card-hover: #F5F3FF;
+  --section: #F3F0FF;
+  --glass: rgba(255,255,255,0.65);
+  --input: #F9FAFB;
+
+  --brand: #8B5CF6;
+  --brand-hover: #7C3AED;
+  --brand-soft: #C4B5FD;
+  --brand-dim: #F5F3FF;
+  --brand-glow: rgba(139,92,246,0.35);
+  --purple: #7C3AED;
+  --purple-dim: #F5F3FF;
+  --sky-soft: #CFFAFE;
+  --pink-soft: #FBCFE8;
+  --peach-soft: #FED7AA;
+  --mint-soft: #BBF7D0;
+
+  --success: #22C55E;
+  --success-dim: #BBF7D0;
+  --warning: #FACC15;
+  --warning-dim: #FED7AA;
+  --error: #EF4444;
+  --error-dim: #FEE2E2;
+  --info: #94A3B8;
+  --info-dim: #F3F4F6;
+
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --white: #FFFFFF;
+
+  --border: #E5E7EB;
+  --border-active: #8B5CF6;
+
+  --shadow-soft-purple: rgba(139, 92, 246, 0.12);
+  --shadow-floating: rgba(124, 58, 237, 0.28);
+  --shadow-card: rgba(15, 23, 42, 0.05);
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-sidebar: var(--sidebar);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-section: var(--section);
+  --color-glass: var(--glass);
+  --color-input: var(--input);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-dim: var(--brand-dim);
+  --color-brand-glow: var(--brand-glow);
+  --color-purple: var(--purple);
+  --color-purple-dim: var(--purple-dim);
+  --color-sky-soft: var(--sky-soft);
+  --color-pink-soft: var(--pink-soft);
+  --color-peach-soft: var(--peach-soft);
+  --color-mint-soft: var(--mint-soft);
+
+  --color-success: var(--success);
+  --color-success-dim: var(--success-dim);
+  --color-warning: var(--warning);
+  --color-warning-dim: var(--warning-dim);
+  --color-error: var(--error);
+  --color-error-dim: var(--error-dim);
+  --color-info: var(--info);
+  --color-info-dim: var(--info-dim);
+
+  --color-txt-primary: var(--text-primary);
+  --color-txt-secondary: var(--text-secondary);
+  --color-txt-muted: var(--text-muted);
+  --color-white-text: var(--white);
+  --color-border: var(--border);
+  --color-border-active: var(--border-active);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, #F3F0FF 0%, rgba(255,255,255,0.65) 32%, #FAFAFC 62%),
+    #FAFAFC;
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--brand-soft); }
+
+.glass {
+  background: linear-gradient(180deg, #FFFFFF 0%, #F5F3FF 100%);
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 45px var(--shadow-card);
+}
+
+.glass-hover:hover {
+  background: var(--card-hover);
+  border-color: var(--border-active);
+  box-shadow: 0 18px 50px var(--shadow-soft-purple);
+}
+
+.soft-glass {
+  background: var(--glass);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 18px 45px var(--shadow-card);
+}
+
+.glow-brand { box-shadow: 0 18px 50px var(--shadow-soft-purple); }
+.glow-purple { box-shadow: 0 18px 50px var(--shadow-floating); }
+.glow-sky { box-shadow: 0 18px 50px var(--shadow-soft-purple); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 var(--brand-glow); }
+  50% { box-shadow: 0 18px 40px var(--brand-glow); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+.skeleton {
+  background: linear-gradient(90deg, #FFFFFF 25%, #F5F3FF 50%, #FFFFFF 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
