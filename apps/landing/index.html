@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwasthAI | The Future of Clinical Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #7C3AED;
+            --secondary: #06B6D4;
+            --accent: #F472B6;
+            --bg: #F8FAFC;
+            --glass: rgba(255, 255, 255, 0.85);
+            --border: rgba(124, 58, 237, 0.1);
+            --text: #1E293B;
+            --text-light: #64748B;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+        
+        .mesh-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(circle at 0% 0%, rgba(124, 58, 237, 0.08) 0%, transparent 50%), radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.08) 0%, transparent 50%); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+        /* --- Navbar --- */
+        nav { padding: 32px 0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; background: rgba(248, 250, 252, 0.8); backdrop-filter: blur(10px); }
+        .logo { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; color: var(--primary); letter-spacing: -1px; }
+        .logo span { color: var(--secondary); }
+        .btn { padding: 14px 28px; border-radius: 12px; font-weight: 700; text-decoration: none; transition: all 0.3s ease; display: inline-block; cursor: pointer; border: none; }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 10px 20px rgba(124, 58, 237, 0.2); }
+
+        /* --- Hero --- */
+        .hero { padding: 80px 0; text-align: center; }
+        .hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: 68px; font-weight: 800; line-height: 1.1; margin-bottom: 24px; letter-spacing: -3px; }
+        .hero h1 span { background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 20px; color: var(--text-light); max-width: 800px; margin: 0 auto 40px; }
+
+        /* --- Module Grid --- */
+        .section-tag { color: var(--primary); font-weight: 800; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; display: block; text-align: center; }
+        .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 44px; text-align: center; margin-bottom: 60px; }
+        
+        .module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 32px; margin-bottom: 100px; }
+        .module-card { background: var(--glass); border: 1px solid white; border-radius: 32px; padding: 48px; box-shadow: 0 20px 40px rgba(0,0,0,0.03); transition: all 0.4s ease; }
+        .module-card:hover { transform: translateY(-10px); border-color: var(--primary); }
+        .module-card h3 { font-family: 'Space Grotesk'; font-size: 26px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+        .module-card p { color: var(--text-light); font-size: 15px; margin-bottom: 24px; }
+        .module-card .badge { background: rgba(124, 58, 237, 0.1); color: var(--primary); padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 800; }
+
+        /* --- Comparison Table --- */
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; margin: 40px 0; }
+        .data-table th { text-align: left; padding: 16px; color: var(--text-light); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .data-table td { padding: 24px; background: white; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 14px; }
+        .data-table td:first-child { border-left: 1px solid var(--border); border-top-left-radius: 16px; border-bottom-left-radius: 16px; font-weight: 600; color: var(--primary); width: 40%; }
+        .data-table td:last-child { border-right: 1px solid var(--border); border-top-right-radius: 16px; border-bottom-right-radius: 16px; color: var(--text-light); }
+
+        /* --- USPs Grid --- */
+        .usp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 100px; }
+        .usp-card { background: white; padding: 32px; border-radius: 24px; border: 1px solid var(--border); transition: all 0.3s ease; }
+        .usp-card:hover { border-color: var(--secondary); background: rgba(6, 182, 212, 0.02); }
+        .usp-card h4 { font-family: 'Space Grotesk'; font-size: 18px; margin-bottom: 12px; color: var(--text); }
+        .usp-card p { font-size: 13px; color: var(--text-light); }
+        .usp-card .num { font-family: 'Space Grotesk'; font-size: 32px; font-weight: 800; color: rgba(124, 58, 237, 0.1); margin-bottom: 12px; display: block; }
+
+        /* --- Stakeholder Section --- */
+        .stakeholder-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 100px; }
+        .stakeholder-box { background: var(--glass); padding: 32px; border-radius: 24px; border: 1px solid white; }
+        .stakeholder-box h4 { font-family: 'Space Grotesk'; margin-bottom: 16px; color: var(--primary); }
+        .stakeholder-box li { list-style: none; font-size: 13px; color: var(--text-light); margin-bottom: 8px; position: relative; padding-left: 18px; }
+        .stakeholder-box li::before { content: '✓'; position: absolute; left: 0; color: var(--secondary); font-weight: 800; }
+
+        @media (max-width: 1024px) { .stakeholder-grid { grid-template-columns: repeat(2, 1fr); } .hero h1 { font-size: 48px; } }
+    </style>
+</head>
+<body>
+    <div class="mesh-bg"></div>
+    <div class="container">
+        <nav>
+            <div class="logo">Swasth<span>AI</span></div>
+            <div style="display: flex; gap: 20px; align-items: center;">
+                <span style="font-size: 13px; font-weight: 600; color: var(--text-light);">Pitch Deck 2026</span>
+                <a href="#" class="btn btn-primary">Launch Demo</a>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <span class="section-tag">Revolutionizing Healthcare Logistics</span>
+            <h1>The New <span>Standard</span> of Clinical Care.</h1>
+            <p>SwasthAI merges advanced LLM patterns with high-precision diagnostics to automate the physician's journey. Five modules. One goal: Excellence.</p>
+        </section>
+
+        <!-- --- THE 5 MODULES --- -->
+        <span class="section-tag">Product Ecosystem</span>
+        <h2 class="section-title">The SwasthAI Core Engine</h2>
+        <div class="module-grid">
+            <div class="module-card">
+                <span class="badge">MODULE 1</span>
+                <h3>Consultation Intel (LLM-1)</h3>
+                <p>An ambient clinical scribe that listens to live consultations, extracting technical medical data into structured clinical notes automatically.</p>
+                <div style="font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 10px;">CAPABILITIES:</div>
+                <ul style="font-size: 13px; color: var(--text-light); list-style: none;">
+                    <li>• Chief complaint & emotional cues</li>
+                    <li>• Auto-generated SOAP notes</li>
+                    <li>• ICD-10 Coded Diagnoses</li>
+                </ul>
+            </div>
+            <div class="module-card">
+                <span class="badge">MODULE 2</span>
+                <h3>AI Clinical Advisor (LLM-2)</h3>
+                <p>A silent second brain that cross-references clinical plans against WHO, ICMR, and STG guidelines without overriding doctor judgment.</p>
+                <ul style="font-size: 13px; color: var(--text-light); list-style: none;">
+                    <li>• Evidence-based plan validation</li>
+                    <li>• Non-intrusive alternative suggestions</li>
+                    <li>• Full clinical authority for doctors</li>
+                </ul>
+            </div>
+            <div class="module-card">
+                <span class="badge">MODULE 3</span>
+                <h3>Centralized Health Record</h3>
+                <p>A government-integrated, patient-centric repository providing a permanent, portable medical identity for every citizen.</p>
+                <ul style="font-size: 13px; color: var(--text-light); list-style: none;">
+                    <li>• ABDM/Ayushman Bharat Alignment</li>
+                    <li>• Consent-controlled history sharing</li>
+                    <li>• 30-year lifelong secure retention</li>
+                </ul>
+            </div>
+            <div class="module-card">
+                <span class="badge">MODULE 4</span>
+                <h3>Image Analyzer</h3>
+                <p>Advanced Vision AI that cross-references radiology findings against typed lab reports to catch discrepancies instantly.</p>
+                <ul style="font-size: 13px; color: var(--text-light); list-style: none;">
+                    <li>• X-Ray/CT/MRI/ECG Analysis</li>
+                    <li>• Report Mismatch Detection</li>
+                    <li>• Suspicious Pattern Flagging</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- --- DATA TABLE --- -->
+        <span class="section-tag">Module 1 Deep Dive</span>
+        <h2 class="section-title">Ambient Scribe Dynamics</h2>
+        <table class="data-table">
+            <tr><th>What It Captures</th><th>What It Outputs</th></tr>
+            <tr><td>Chief complaint in patient's own words</td><td>Structured SOAP note (S/O/A/P)</td></tr>
+            <tr><td>Duration, severity, & symptoms</td><td>Auto-generated discharge summary</td></tr>
+            <tr><td>Doctor's examination findings</td><td>Patient-friendly plain language summary</td></tr>
+            <tr><td>Prescription & follow-up instructions</td><td>Referral letter (one-click generation)</td></tr>
+        </table>
+
+        <!-- --- STAKEHOLDERS --- -->
+        <span class="section-tag">Value Proposition</span>
+        <h2 class="section-title">A Solution for Everyone</h2>
+        <div class="stakeholder-grid">
+            <div class="stakeholder-box">
+                <h4>For Patients</h4>
+                <ul><li>No physical reports needed</li><li>Complete history anywhere</li><li>Consent-controlled</li></ul>
+            </div>
+            <div class="stakeholder-box">
+                <h4>For Doctors</h4>
+                <ul><li>Instant full history</li><li>Avoid duplicate tests</li><li>Zero-effort notes</li></ul>
+            </div>
+            <div class="stakeholder-box">
+                <h4>For Government</h4>
+                <ul><li>Real-time epidemiological data</li><li>ABDM Alignment</li><li>Standardized health index</li></ul>
+            </div>
+            <div class="stakeholder-box">
+                <h4>For Insurance</h4>
+                <ul><li>Fraud prevention via authenticated records</li><li>Instant ICD-10 billing codes</li><li>Faster claim settlement</li></ul>
+            </div>
+        </div>
+
+        <!-- --- USPs --- -->
+        <span class="section-tag">The Competitive Edge</span>
+        <h2 class="section-title">13 Strategic USPs</h2>
+        <div class="usp-grid">
+            <div class="usp-card">
+                <span class="num">01</span>
+                <h4>Ambient Scribe</h4>
+                <p>Zero-effort documentation. Reports ready before the patient leaves the room.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">02</span>
+                <h4>Silent Interaction Checker</h4>
+                <p>Non-intrusive safety guard for every prescription. Respects clinical authority.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">03</span>
+                <h4>ICD-10 Automation</h4>
+                <p>Eliminate billing friction. The backdoor to hospital-wide adoption.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">04</span>
+                <h4>One-Click Referral</h4>
+                <p>Draft professional referral letters in seconds, not minutes.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">05</span>
+                <h4>Contextual Follow-ups</h4>
+                <p>Be prepared for every return visit with clinical context ready.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">06</span>
+                <h4>2nd Opinion Network</h4>
+                <p>Turn informal consults into medico-legally sound collaboration.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">07</span>
+                <h4>Preventive Flags</h4>
+                <p>Differentiate through systematic excellence in screening.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">08</span>
+                <h4>Image Mismatch Check</h4>
+                <p>Catch diagnostic errors by cross-checking vision vs. report.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">09</span>
+                <h4>Guideline-Backed Brain</h4>
+                <p>WHO/ICMR/STG standard protocols in every consultation.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">10</span>
+                <h4>Lifelong Records</h4>
+                <p>One identity from birth to death. No data fragmentation.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">11</span>
+                <h4>Dual-Audience Reports</h4>
+                <p>One click, two versions: Professional and Patient-friendly.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">12</span>
+                <h4>India-First Multilingual</h4>
+                <p>Designed for the real Indian clinical workforce. Built-in local support.</p>
+            </div>
+            <div class="usp-card">
+                <span class="num">13</span>
+                <h4>Non-Intrusive Intel</h4>
+                <p>AI that enhances workflow without blocking it. Ambient excellence.</p>
+            </div>
+        </div>
+
+        <footer style="padding: 100px 0; text-align: center; border-top: 1px solid var(--border); color: var(--text-light); font-size: 14px;">
+            <p>© 2026 SwasthAI Clinical Intelligence | Built for the Global Future of Healthcare.</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,5 +1,5 @@
 // apps/mobile/app/onboarding/login.jsx
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   View, Text, TextInput, Pressable, SafeAreaView,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator,
@@ -19,6 +19,9 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState(null)
   const [remember, setRemember] = useState(true)
+
+  const emailRef = useRef(null)
+  const passwordRef = useRef(null)
 
   const canSubmit = email.trim().length > 0 && password.length >= 6
 
@@ -86,6 +89,7 @@ export default function LoginScreen() {
           }}>
             <Ionicons name="mail-outline" size={18} color={t.text.muted} />
             <TextInput
+              ref={emailRef}
               value={email}
               onChangeText={setEmail}
               placeholder="doctor@swasthai.com"
@@ -93,6 +97,9 @@ export default function LoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
+              returnKeyType="next"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              blurOnSubmit={false}
               style={{
                 flex: 1, height: 48,
                 fontFamily: t.typography.body.fontFamily,
@@ -103,11 +110,17 @@ export default function LoginScreen() {
 
           {/* Password */}
           <SecurePasswordInput
+            inputRef={passwordRef}
             label="Password"
             value={password}
             onChangeText={setPassword}
             placeholder="Enter your password"
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
           />
+
+          {/* Spacing to prevent accidental taps */}
+          <View style={{ height: 10 }} />
 
           {/* Remember + Forgot */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -126,7 +139,10 @@ export default function LoginScreen() {
               <Text style={{ ...t.typography.body, color: t.text.secondary }}>Remember me</Text>
             </Pressable>
 
-            <Pressable onPress={() => router.push('/onboarding/forgot-password')}>
+            <Pressable
+              onPress={() => router.push('/onboarding/forgot-password')}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Text style={{ ...t.typography.link, color: t.brand.teal }}>Forgot password?</Text>
             </Pressable>
           </View>

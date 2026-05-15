@@ -34,6 +34,26 @@ export const useChatStore = create((set, get) => ({
       participants: [
         { userId: 'p_ram', name: 'Ram', online: true, avatarInitials: 'R', avatarColor: '#10B981' }
       ]
+    },
+    {
+      id: 'conv_4',
+      type: 'DOCTOR_PATIENT',
+      unreadCount: 0,
+      lastMessage: 'The incision site looks very clean today.',
+      lastMessageAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+      participants: [
+        { userId: 'p_krishnakant', name: 'Krishnakant', online: true, avatarInitials: 'KK', avatarColor: '#14B8A6' }
+      ]
+    },
+    {
+      id: 'conv_5',
+      type: 'DOCTOR_PATIENT',
+      unreadCount: 3,
+      lastMessage: 'My sugar level was 180 this morning.',
+      lastMessageAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+      participants: [
+        { userId: 'p_jayganesh', name: 'Jayganesh', online: true, avatarInitials: 'JG', avatarColor: '#EF4444' }
+      ]
     }
   ],
   messages: {
@@ -51,6 +71,19 @@ export const useChatStore = create((set, get) => ({
     'conv_3': [
       { id: 'm8', conversationId: 'conv_3', senderId: 'me', content: 'Ram, please upload your latest blood work.', createdAt: new Date(Date.now() - 1000 * 60 * 500).toISOString(), status: 'read', reactions: [] },
       { id: 'm9', conversationId: 'conv_3', senderId: 'p_ram', content: 'I have uploaded the reports.', createdAt: new Date(Date.now() - 1000 * 60 * 400).toISOString(), status: 'delivered', reactions: [] },
+    ],
+    'conv_4': [
+      { id: 'm10', conversationId: 'conv_4', senderId: 'p_krishnakant', content: 'Doctor, should I be worried about the slight redness around the stitches?', createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), status: 'read', reactions: [] },
+      { id: 'm11', conversationId: 'conv_4', senderId: 'me', content: 'Slight redness is normal during the first month of recovery. Is there any discharge or increased pain?', createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(), status: 'read', reactions: [] },
+      { id: 'm12', conversationId: 'conv_4', senderId: 'p_krishnakant', content: 'No discharge, and the pain is actually decreasing.', createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), status: 'read', reactions: [] },
+      { id: 'm13', conversationId: 'conv_4', senderId: 'me', content: 'Then you are doing great. Keep the area dry.', createdAt: new Date(Date.now() - 1000 * 60 * 20).toISOString(), status: 'read', reactions: [] },
+      { id: 'm14', conversationId: 'conv_4', senderId: 'p_krishnakant', content: 'The incision site looks very clean today.', createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(), status: 'delivered', reactions: [] },
+    ],
+    'conv_5': [
+      { id: 'm15', conversationId: 'conv_5', senderId: 'me', content: 'Jayganesh, how are your fasting glucose readings this week?', createdAt: new Date(Date.now() - 1000 * 60 * 200).toISOString(), status: 'read', reactions: [] },
+      { id: 'm16', conversationId: 'conv_5', senderId: 'p_jayganesh', content: 'They were around 140 earlier this week.', createdAt: new Date(Date.now() - 1000 * 60 * 180).toISOString(), status: 'read', reactions: [] },
+      { id: 'm17', conversationId: 'conv_5', senderId: 'p_jayganesh', content: 'But I had some sweets at a family function yesterday.', createdAt: new Date(Date.now() - 1000 * 60 * 10).toISOString(), status: 'delivered', reactions: [] },
+      { id: 'm18', conversationId: 'conv_5', senderId: 'p_jayganesh', content: 'My sugar level was 180 this morning.', createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(), status: 'delivered', reactions: [] },
     ]
   },
   typingUsers: {},        // Record<conversationId, userId[]>

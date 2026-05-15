@@ -17,7 +17,10 @@ export const api = axios.create({
 const refreshApi = axios.create({
   baseURL: API_BASE,
   timeout: 15000,
-  headers: { Accept: "application/json", "Content-Type": "application/json" },
+  headers: { 
+    Accept: "application/json", 
+    "Content-Type": "application/json",
+  },
 });
 
 let refreshPromise = null;

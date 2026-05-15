@@ -8,6 +8,9 @@ import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useAuthStore } from '../../store/authStore'
 import { doctorTheme as t } from '../../constants/doctorTheme'
+import { CameraView, useCameraPermissions } from 'expo-camera'
+import { Modal, TextInput, ActivityIndicator, SafeAreaView, StyleSheet } from 'react-native'
+import { aiService } from '../../services/aiService'
 
 const SHIFT_INFO = { type: 'Day Shift', time: '7:00 AM — 3:00 PM', ward: 'General Ward A' }
 
@@ -39,10 +42,51 @@ export default function NurseHome() {
   const hour = now.getHours()
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening'
 
+  const [selectedPatient, setSelectedPatient] = useState(null)
+  const [showVitalsModal, setShowVitalsModal] = useState(false)
+  const [showCamera, setShowCamera] = useState(false)
+  const [isScanning, setIsScanning] = useState(false)
+  const [vitals, setVitals] = useState({ temp: '', bp: '', spo2: '', hr: '' })
+  const cameraRef = useRef(null)
+  const [permission, requestPermission] = useCameraPermissions()
+
   const fadeAnim = useRef(new Animated.Value(0)).current
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start()
   }, [fadeAnim])
+
+  const handleOpenVitals = (pt) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setSelectedPatient(pt)
+    setVitals({ temp: '', bp: '', spo2: '', hr: '' })
+    setShowVitalsModal(true)
+  }
+
+  const handleStartScan = async () => {
+    if (!permission?.granted) {
+      const res = await requestPermission()
+      if (!res.granted) return
+    }
+    setShowCamera(true)
+  }
+
+  const captureVitals = async () => {
+    setIsScanning(true)
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    
+    // Simulate AI OCR scanning a monitor
+    setTimeout(() => {
+      setVitals({
+        temp: '98.6°F',
+        bp: '120/80',
+        spo2: '98%',
+        hr: '72 bpm'
+      })
+      setIsScanning(false)
+      setShowCamera(false)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    }, 2000)
+  }
 
   return (
     <Animated.View style={{ flex: 1, backgroundColor: t.bg.primary, opacity: fadeAnim }}>
@@ -132,12 +176,18 @@ export default function NurseHome() {
             </View>
           </View>
           {MOCK_PATIENTS.map((pt) => (
-            <View key={pt.id} style={{
-              backgroundColor: t.bg.secondary, borderWidth: 1, borderColor: t.border.subtle,
-              borderRadius: t.radius.card, paddingVertical: 14, paddingHorizontal: 16, marginBottom: 8,
-              flexDirection: 'row', alignItems: 'center', gap: 12,
-              shadowColor: t.shadow.card, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 6, elevation: 2,
-            }}>
+            <Pressable 
+              key={pt.id} 
+              onPress={() => handleOpenVitals(pt)}
+              style={({ pressed }) => [{
+                backgroundColor: t.bg.secondary, borderWidth: 1, borderColor: t.border.subtle,
+                borderRadius: t.radius.card, paddingVertical: 14, paddingHorizontal: 16, marginBottom: 8,
+                flexDirection: 'row', alignItems: 'center', gap: 12,
+                shadowColor: t.shadow.card, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 6, elevation: 2,
+                opacity: pressed ? 0.8 : 1,
+                transform: [{ scale: pressed ? 0.98 : 1 }]
+              }]}
+            >
               {/* Bed badge */}
               <View style={{
                 width: 44, height: 44, borderRadius: 14,
@@ -162,7 +212,7 @@ export default function NurseHome() {
                   {pt.vitals}
                 </Text>
               </View>
-            </View>
+            </Pressable>
           ))}
         </View>
 
@@ -226,6 +276,126 @@ export default function NurseHome() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Vitals Entry Modal */}
+      <Modal visible={showVitalsModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Update Vitals</Text>
+                <Text style={styles.modalSub}>{selectedPatient?.name} · Bed {selectedPatient?.bed}</Text>
+              </View>
+              <Pressable onPress={() => setShowVitalsModal(false)} style={styles.closeBtn}>
+                <Ionicons name="close" size={24} color={t.text.secondary} />
+              </Pressable>
+            </View>
+
+            <ScrollView style={{ padding: 20 }}>
+              <Pressable onPress={handleStartScan} style={styles.scanPromo}>
+                <Ionicons name="scan-circle" size={32} color={t.brand.teal} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.promoTitle}>AI Smart Scan</Text>
+                  <Text style={styles.promoSub}>Point camera at patient monitor to auto-fill</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={t.text.muted} />
+              </Pressable>
+
+              <View style={styles.inputGrid}>
+                {[
+                  { label: 'Temperature', key: 'temp', icon: 'thermometer-outline' },
+                  { label: 'Blood Pressure', key: 'bp', icon: 'pulse-outline' },
+                  { label: 'SpO2', key: 'spo2', icon: 'water-outline' },
+                  { label: 'Heart Rate', key: 'hr', icon: 'heart-outline' },
+                ].map((field) => (
+                  <View key={field.key} style={styles.inputField}>
+                    <Text style={styles.inputLabel}>{field.label}</Text>
+                    <View style={styles.inputBox}>
+                      <Ionicons name={field.icon} size={18} color={t.text.muted} />
+                      <TextInput
+                        value={vitals[field.key]}
+                        onChangeText={(val) => setVitals({...vitals, [field.key]: val})}
+                        placeholder="--"
+                        style={styles.textInput}
+                      />
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              <Pressable 
+                onPress={() => {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+                  setShowVitalsModal(false)
+                }}
+                style={styles.saveBtn}
+              >
+                <Text style={styles.saveBtnText}>Save Vitals to EMR</Text>
+              </Pressable>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* AI Scanner Overlay */}
+      {showCamera && (
+        <View style={styles.cameraOverlay}>
+          <CameraView style={StyleSheet.absoluteFill} facing="back" />
+          <SafeAreaView style={styles.cameraHeader}>
+            <Pressable onPress={() => setShowCamera(false)} style={styles.camClose}>
+              <Ionicons name="close" size={28} color="#FFF" />
+            </Pressable>
+          </SafeAreaView>
+          <View style={styles.scannerUi}>
+            <View style={styles.scanFrame}>
+              {isScanning && <ActivityIndicator color={t.brand.teal} size="large" />}
+              <Text style={styles.scanFrameText}>{isScanning ? 'AI ANALYZING MONITOR...' : 'ALIGN WITH MONITOR'}</Text>
+            </View>
+            <Pressable onPress={captureVitals} style={styles.captureCircle} disabled={isScanning}>
+              <View style={styles.captureInner} />
+            </Pressable>
+          </View>
+        </View>
+      )}
     </Animated.View>
   )
 }
+
+const styles = StyleSheet.create({
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#FFF', borderTopLeftRadius: 30, borderTopRightRadius: 30, height: '80%' },
+  modalHeader: { 
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', 
+    padding: 24, borderBottomWidth: 1, borderBottomColor: t.border.subtle 
+  },
+  modalTitle: { ...t.typography.h2, color: t.text.primary },
+  modalSub: { ...t.typography.body, color: t.text.secondary, marginTop: 4 },
+  closeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: t.bg.tertiary, alignItems: 'center', justifyContent: 'center' },
+  scanPromo: { 
+    flexDirection: 'row', alignItems: 'center', gap: 16, backgroundColor: t.brand.tealDim, 
+    padding: 16, borderRadius: 16, marginBottom: 24, borderWidth: 1, borderColor: t.brand.teal + '30'
+  },
+  promoTitle: { ...t.typography.bodySemi, color: t.brand.teal, fontSize: 16 },
+  promoSub: { ...t.typography.caption, color: t.text.secondary },
+  inputGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 32 },
+  inputField: { width: '47%' },
+  inputLabel: { ...t.typography.caption, color: t.text.muted, marginBottom: 8, textTransform: 'uppercase' },
+  inputBox: { 
+    flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: t.bg.tertiary, 
+    paddingHorizontal: 12, borderRadius: 12, height: 48, borderWidth: 1, borderColor: t.border.subtle 
+  },
+  textInput: { flex: 1, ...t.typography.bodySemi, color: t.text.primary },
+  saveBtn: { backgroundColor: t.brand.indigo, padding: 18, borderRadius: 16, alignItems: 'center' },
+  saveBtnText: { ...t.typography.bodySemi, color: '#FFF', fontSize: 16 },
+  cameraOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: '#000', zIndex: 1000 },
+  cameraHeader: { padding: 20 },
+  camClose: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
+  scannerUi: { position: 'absolute', bottom: 60, left: 0, right: 0, alignItems: 'center' },
+  scanFrame: { 
+    width: 280, height: 180, borderWidth: 2, borderColor: t.brand.teal, borderRadius: 20, 
+    alignItems: 'center', justifyContent: 'center', marginBottom: 40, backgroundColor: 'rgba(0,200,180,0.1)'
+  },
+  scanFrameText: { ...t.typography.caption, color: t.brand.teal, fontWeight: '800', marginTop: 10 },
+  captureCircle: { width: 72, height: 72, borderRadius: 36, borderWidth: 4, borderColor: '#FFF', padding: 4 },
+  captureInner: { flex: 1, borderRadius: 32, backgroundColor: '#FFF' },
+})

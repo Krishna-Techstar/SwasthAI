@@ -18,7 +18,7 @@ export default function OTPScreen() {
     useAuthStore();
   const [otp, setOtp] = useState("");
   const [error, setError] = useState(null);
-  const [countdown, setCountdown] = useState(45);
+  const [countdown, setCountdown] = useState(60);
   const timerRef = useRef(null);
 
   const phone = basicDetails?.phone ?? "+91 ••••• •••••";
@@ -39,7 +39,7 @@ export default function OTPScreen() {
 
   const handleResend = async () => {
     if (countdown > 0) return;
-    setCountdown(45);
+    setCountdown(60);
     timerRef.current = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {

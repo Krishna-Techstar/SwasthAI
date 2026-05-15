@@ -1,9 +1,9 @@
-// Shared Profile Screen — Patient
 import { useState } from 'react'
-import { View, Text, Pressable, ScrollView, Modal } from 'react-native'
+import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
+import QRCode from 'react-native-qrcode-svg'
 import { useAuthStore } from '../../store/authStore'
 import { VerificationBadge } from '../../components/ui/VerificationBadge'
 import { PillButton } from '../../components/ui/PillButton'
@@ -49,6 +49,9 @@ export default function PatientProfile() {
   const { user, role, verificationStatus, logout } = useAuthStore()
   const [showLogout, setShowLogout] = useState(false)
 
+  // Mock ABHA ID for the patient (in a real app, this comes from the user profile)
+  const ABHA_ID = "91-2345-6789-0123"
+
   const handleLogout = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
     logout()
@@ -69,7 +72,7 @@ export default function PatientProfile() {
     <View style={{ flex: 1, backgroundColor: t.bg.primary }}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 52 }}>
         {/* Avatar + Name */}
-        <View style={{ alignItems: 'center', marginBottom: 24 }}>
+        <View style={{ alignItems: 'center', marginBottom: 32 }}>
           <View style={{
             width: 80, height: 80, borderRadius: 24,
             backgroundColor: t.brand.tealDim,
@@ -77,16 +80,40 @@ export default function PatientProfile() {
             alignItems: 'center', justifyContent: 'center', marginBottom: 12,
           }}>
             <Text style={{ ...t.typography.display, color: t.brand.teal, fontSize: 28 }}>
-              {user?.avatarInitials ?? '?'}
+              {user?.avatarInitials ?? user?.name?.[0] ?? 'K'}
             </Text>
           </View>
-          <Text style={{ ...t.typography.h2, color: t.text.primary }}>{user?.name ?? 'Guest'}</Text>
-          <Text style={{ ...t.typography.body, color: t.text.secondary, marginTop: 2 }}>{user?.email}</Text>
+          <Text style={{ ...t.typography.h2, color: t.text.primary }}>{user?.name ?? 'Krishna'}</Text>
+          <Text style={{ ...t.typography.body, color: t.text.secondary, marginTop: 2 }}>{user?.email ?? 'krishna@swasthai.demo'}</Text>
           <View style={{ marginTop: 8, flexDirection: 'row', gap: 8, alignItems: 'center' }}>
             <View style={{ backgroundColor: t.brand.tealDim, paddingHorizontal: 12, paddingVertical: 4, borderRadius: t.radius.chip }}>
-              <Text style={{ ...t.typography.bodySemi, fontSize: 12, color: t.brand.teal }}>{role}</Text>
+              <Text style={{ ...t.typography.bodySemi, fontSize: 12, color: t.brand.teal }}>{role ?? 'Patient'}</Text>
             </View>
-            <VerificationBadge status={verificationStatus} size="sm" />
+            <VerificationBadge status={verificationStatus ?? 'Verified'} size="sm" />
+          </View>
+        </View>
+
+        {/* Digital Identity Card */}
+        <View style={styles.idCard}>
+          <View style={styles.idHeader}>
+            <Ionicons name="finger-print" size={20} color={t.brand.indigo} />
+            <Text style={styles.idTitle}>DIGITAL IDENTITY (ABHA)</Text>
+          </View>
+          
+          <View style={styles.idContent}>
+            <View style={styles.qrContainer}>
+              <QRCode
+                value={ABHA_ID}
+                size={120}
+                color={t.brand.indigo}
+                backgroundColor="#FFF"
+              />
+            </View>
+            <View style={styles.idInfo}>
+              <Text style={styles.idLabel}>ABHA Number</Text>
+              <Text style={styles.idValue}>{ABHA_ID}</Text>
+              <Text style={styles.idHint}>Present this QR for identity verification at SwasthAI terminals.</Text>
+            </View>
           </View>
         </View>
 
@@ -133,3 +160,66 @@ export default function PatientProfile() {
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  idCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: t.border.subtle,
+    marginBottom: 24,
+    shadowColor: t.brand.indigo,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 4
+  },
+  idHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: t.border.subtle
+  },
+  idTitle: {
+    ...t.typography.caption,
+    color: t.text.muted,
+    letterSpacing: 1.5,
+    fontWeight: '700'
+  },
+  idContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20
+  },
+  qrContainer: {
+    padding: 10,
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: t.border.subtle
+  },
+  idInfo: {
+    flex: 1
+  },
+  idLabel: {
+    ...t.typography.caption,
+    color: t.text.muted,
+    marginBottom: 4
+  },
+  idValue: {
+    ...t.typography.bodySemi,
+    color: t.brand.indigo,
+    fontSize: 15,
+    marginBottom: 8
+  },
+  idHint: {
+    ...t.typography.caption,
+    color: t.text.muted,
+    fontSize: 10,
+    lineHeight: 14
+  }
+})

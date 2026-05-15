@@ -78,6 +78,15 @@ export const useConsultationStore = create((set, get) => ({
   isGenerating: false,
   generatingLabel: '',
 
+  // ── Radiology (LLM2 image pipeline) ────────────────────────────────────────
+  radiologyImages: [],      // [{ id, uri, type, uploadedAt, analysisStatus }]
+  radiologyAnalysis: null,  // { classification, findings, confidence, heatmapUri, volumeOverlayUri }
+  shapValues: null,         // Explainability data for LLM2
+  
+  // ── Drug Safety & Allergies ────────────────────────────────────────────────
+  safetyAlerts: [],         // [{ type: 'allergy'|'interaction', severity: 'low'|'high', message, drugs: [] }]
+  allergyChecked: false,
+
   // ═══════════════════════════════════════════════════════════════════════════
   // ACTIONS
   // ═══════════════════════════════════════════════════════════════════════════
@@ -107,6 +116,11 @@ export const useConsultationStore = create((set, get) => ({
       followUp: null,
       isListening: false,
       isGenerating: false,
+      radiologyImages: [],
+      radiologyAnalysis: null,
+      shapValues: null,
+      safetyAlerts: [],
+      allergyChecked: false,
     }),
 
   setStatus: (status) => set({ status }),
@@ -201,6 +215,18 @@ export const useConsultationStore = create((set, get) => ({
   // ── Generating ──────────────────────────────────────────────────────────────
   setGenerating: (val, label = '') => set({ isGenerating: val, generatingLabel: label }),
 
+  // ── Radiology ──────────────────────────────────────────────────────────────
+  addRadiologyImage: (img) => set((s) => ({ 
+    radiologyImages: [...s.radiologyImages, { ...img, id: 'img_' + Date.now(), uploadedAt: new Date().toISOString() }],
+    workflowType: 'radiology'
+  })),
+  setRadiologyAnalysis: (analysis) => set({ radiologyAnalysis: analysis }),
+  setShapValues: (shap) => set({ shapValues: shap }),
+
+  // ── Safety ─────────────────────────────────────────────────────────────────
+  setSafetyAlerts: (alerts) => set({ safetyAlerts: alerts, allergyChecked: true }),
+  addSafetyAlert: (alert) => set((s) => ({ safetyAlerts: [...s.safetyAlerts, alert] })),
+
   // ── Full reset ──────────────────────────────────────────────────────────────
   resetSession: () =>
     set({
@@ -246,5 +272,10 @@ export const useConsultationStore = create((set, get) => ({
       followUpSuggestions: [],
       isGenerating: false,
       generatingLabel: '',
+      radiologyImages: [],
+      radiologyAnalysis: null,
+      shapValues: null,
+      safetyAlerts: [],
+      allergyChecked: false,
     }),
 }))

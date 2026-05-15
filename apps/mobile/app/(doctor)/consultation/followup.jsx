@@ -1,102 +1,196 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { View, Text, Pressable, Animated, Easing } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { 
+  View, Text, StyleSheet, ScrollView, Pressable, 
+  SafeAreaView, Animated, ActivityIndicator, Alert
+} from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { doctorTheme as t } from '../../../constants/doctorTheme'
 import { useConsultationStore } from '../../../store/consultationStore'
-import { appointmentService } from '../../../services/appointmentService'
-import { FollowUpScheduler } from '../../../components/consultation/FollowUpScheduler'
 
-export default function FollowUpScreen() {
-  const [scheduled, setScheduled] = useState(false)
-  const patient = useConsultationStore((s) => s.patient)
-  const followUpSuggestions = useConsultationStore((s) => s.followUpSuggestions)
-  const setFollowUpSuggestions = useConsultationStore((s) => s.setFollowUpSuggestions)
-  const setFollowUp = useConsultationStore((s) => s.setFollowUp)
-  const resetSession = useConsultationStore((s) => s.resetSession)
-  const checkScale = useRef(new Animated.Value(0)).current
-  const checkOpacity = useRef(new Animated.Value(0)).current
+export default function FollowupSummaryScreen() {
+  const { 
+    soapNote, soapAiConfidence, setGenerating, isGenerating,
+    patient, safetyAlerts, setSafetyAlerts, resetSession
+  } = useConsultationStore()
 
+  const [isCheckingSafety, setIsCheckingSafety] = useState(false)
+  const [safetyVerified, setSafetyVerified] = useState(false)
+  const checkScale = React.useRef(new Animated.Value(0)).current
+  const checkOpacity = React.useRef(new Animated.Value(0)).current
+
+  // Simulate Safety Check on Load
   useEffect(() => {
-    loadSuggestions()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadSuggestions = async () => {
-    const sug = await appointmentService.getAISuggestions(patient?.id, 'angina')
-    setFollowUpSuggestions(sug)
-  }
-
-  const handleSchedule = useCallback(async (data) => {
-    try {
-      await appointmentService.scheduleAppointment({
-        patientId: patient?.id,
-        doctorId: 'doc_001',
-        date: data.date,
-        type: 'Follow-up',
-      })
-      for (const rm of data.reminders) {
-        await appointmentService.setReminder('apt_001', rm)
-      }
-      setFollowUp({ date: data.date, urgency: data.urgency, reminders: data.reminders })
-      setScheduled(true)
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-
-      // Animate checkmark
+    setIsCheckingSafety(true)
+    setTimeout(() => {
+      // Simulate finding a potential interaction
+      const alerts = [
+        { type: 'interaction', severity: 'high', message: 'Aspirin + Warfarin: Increased risk of bleeding.', drugs: ['Aspirin', 'Warfarin'] }
+      ]
+      setSafetyAlerts(alerts)
+      setIsCheckingSafety(false)
+      
       Animated.parallel([
-        Animated.spring(checkScale, { toValue: 1, tension: 200, friction: 10, useNativeDriver: true }),
-        Animated.timing(checkOpacity, { toValue: 1, duration: 400, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.spring(checkScale, { toValue: 1, useNativeDriver: true }),
+        Animated.timing(checkOpacity, { toValue: 1, duration: 400, useNativeDriver: true })
       ]).start()
-    } catch (e) {
-      // handle error
-    }
-  }, [patient, setFollowUp, checkScale, checkOpacity])
+    }, 2000)
+  }, [])
 
-  const handleFinish = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    resetSession()
-    router.replace('/(doctor)/home')
-  }
-
-  if (scheduled) {
-    return (
-      <View style={{ flex: 1, backgroundColor: t.bg.primary, alignItems: 'center', justifyContent: 'center', padding: t.space.xl }}>
-        <Animated.View style={{ transform: [{ scale: checkScale }], opacity: checkOpacity, alignItems: 'center', gap: 16 }}>
-          <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: t.semantic.successDim, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="checkmark-circle" size={48} color={t.semantic.success} />
-          </View>
-          <Text style={{ ...t.typography.h1, color: t.text.primary, textAlign: 'center' }}>Consultation Complete</Text>
-          <Text style={{ ...t.typography.body, color: t.text.secondary, textAlign: 'center' }}>
-            Follow-up scheduled. Report saved and synced.
-          </Text>
-          <Pressable
-            onPress={handleFinish}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 24,
-              backgroundColor: t.brand.teal, paddingHorizontal: 32, paddingVertical: 14, borderRadius: t.radius.btn,
-              shadowColor: t.shadow.floating, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 12, elevation: 8,
-            }}
-          >
-            <Ionicons name="home-outline" size={18} color="#FFFFFF" />
-            <Text style={{ ...t.typography.h3, color: '#FFFFFF' }}>Back to Home</Text>
-          </Pressable>
-        </Animated.View>
-      </View>
+  const handleFinalSave = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    Alert.alert(
+      "Report Finalized",
+      "The clinical report has been signed and synced to ABHA and SwasthAI databases.",
+      [{ text: "Done", onPress: () => {
+        resetSession()
+        router.replace('/(doctor)/home')
+      }}]
     )
   }
 
-  return (
-    <View style={{ flex: 1, backgroundColor: t.bg.primary }}>
-      {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: t.space.base, paddingVertical: t.space.sm, gap: t.space.sm, borderBottomWidth: 1, borderBottomColor: t.border.subtle }}>
-        <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.back() }}
-          style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: t.bg.tertiary, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name="arrow-back" size={18} color={t.text.primary} />
-        </Pressable>
-        <Text style={{ ...t.typography.h2, color: t.text.primary, flex: 1 }}>Follow-up Appointment</Text>
+  const renderSoapSection = (title, content, confidence) => (
+    <View style={styles.soapCard}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <View style={styles.confBadge}>
+          <Text style={styles.confText}>AI Confidence: {(confidence * 100).toFixed(0)}%</Text>
+        </View>
       </View>
-
-      <FollowUpScheduler suggestions={followUpSuggestions} onSchedule={handleSchedule} />
+      <Text style={styles.cardBody}>{content}</Text>
     </View>
   )
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color={t.text.primary} />
+        </Pressable>
+        <Text style={styles.title}>Review & Finalize</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        
+        {/* Safety Check Area */}
+        <View style={[styles.safetyBox, safetyVerified && { borderColor: t.brand.teal }]}>
+          <View style={styles.safetyHeader}>
+            {isCheckingSafety ? (
+               <ActivityIndicator color={t.brand.indigo} size="small" />
+            ) : (
+               <Ionicons name="shield-checkmark" size={20} color={safetyAlerts.length > 0 ? t.semantic.error : t.brand.teal} />
+            )}
+            <Text style={styles.safetyTitle}>DRUG-DRUG INTERACTION CHECK</Text>
+          </View>
+          
+          {isCheckingSafety ? (
+            <Text style={styles.safetyStatus}>Cross-referencing prescription with patient profile...</Text>
+          ) : (
+            <View>
+               {safetyAlerts.map((alert, i) => (
+                 <View key={i} style={styles.alertBox}>
+                   <Ionicons name="warning" size={18} color={t.semantic.error} />
+                   <Text style={styles.alertText}>{alert.message}</Text>
+                 </View>
+               ))}
+               {!safetyAlerts.length && (
+                 <Text style={styles.safeText}>No critical interactions or allergies detected.</Text>
+               )}
+            </View>
+          )}
+        </View>
+
+        <Text style={styles.sectionLabel}>AUTO-GENERATED SOAP REPORT</Text>
+        
+        {renderSoapSection('Subjective', soapNote.subjective, soapAiConfidence.subjective)}
+        {renderSoapSection('Objective', soapNote.objective, soapAiConfidence.objective)}
+        {renderSoapSection('Assessment', soapNote.assessment, soapAiConfidence.assessment)}
+        {renderSoapSection('Plan', soapNote.plan, soapAiConfidence.plan)}
+
+        <View style={styles.appointmentBox}>
+           <Text style={styles.sectionLabel}>NEXT APPOINTMENT</Text>
+           <Pressable style={styles.datePicker}>
+             <Ionicons name="calendar-outline" size={20} color={t.brand.indigo} />
+             <Text style={styles.dateText}>Thursday, 22 May 2026</Text>
+             <Ionicons name="chevron-forward" size={16} color={t.text.muted} />
+           </Pressable>
+        </View>
+
+        <View style={styles.footer}>
+          <Pressable onPress={handleFinalSave} style={styles.saveBtn}>
+            <Text style={styles.saveBtnText}>Sign & Sync Report</Text>
+            <Ionicons name="cloud-upload" size={20} color="#FFF" />
+          </Pressable>
+          <Text style={styles.disclaimer}>By signing, you take full clinical responsibility for this AI-assisted record.</Text>
+        </View>
+
+      </ScrollView>
+    </SafeAreaView>
+  )
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: t.bg.primary },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, height: 60 },
+  backBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  title: { ...t.typography.h3, color: t.text.primary },
+  scrollContent: { padding: 20 },
+  safetyBox: { 
+    backgroundColor: '#FFF', 
+    borderRadius: 20, 
+    padding: 16, 
+    borderWidth: 1, 
+    borderColor: t.border.subtle,
+    marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2
+  },
+  safetyHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  safetyTitle: { ...t.typography.caption, color: t.text.muted, letterSpacing: 1.5, fontWeight: '700' },
+  safetyStatus: { ...t.typography.body, color: t.text.secondary, fontStyle: 'italic' },
+  alertBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: t.semantic.errorDim, padding: 12, borderRadius: 12 },
+  alertText: { ...t.typography.bodyMed, color: t.semantic.error, flex: 1, fontSize: 13 },
+  safeText: { ...t.typography.bodyMed, color: t.brand.teal },
+  sectionLabel: { ...t.typography.caption, color: t.text.muted, letterSpacing: 1.5, marginBottom: 12, paddingLeft: 4 },
+  soapCard: { backgroundColor: '#FFF', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: t.border.subtle, marginBottom: 16 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  cardTitle: { ...t.typography.h3, color: t.text.primary, fontSize: 16 },
+  confBadge: { backgroundColor: t.bg.tertiary, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  confText: { ...t.typography.caption, color: t.text.muted, fontSize: 9 },
+  cardBody: { ...t.typography.body, color: t.text.secondary, lineHeight: 22 },
+  appointmentBox: { marginTop: 16, marginBottom: 40 },
+  datePicker: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#FFF', 
+    padding: 16, 
+    borderRadius: 16, 
+    borderWidth: 1, 
+    borderColor: t.border.subtle,
+    gap: 12
+  },
+  dateText: { ...t.typography.bodyMed, color: t.text.primary, flex: 1 },
+  footer: { alignItems: 'center', gap: 16, marginBottom: 40 },
+  saveBtn: { 
+    backgroundColor: t.brand.indigo, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    padding: 20, 
+    borderRadius: 20, 
+    width: '100%',
+    gap: 12,
+    shadowColor: t.brand.indigo,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 8
+  },
+  saveBtnText: { ...t.typography.bodySemi, color: '#FFF', fontSize: 18 },
+  disclaimer: { ...t.typography.caption, color: t.text.muted, textAlign: 'center', paddingHorizontal: 20 },
+})

@@ -1,4 +1,5 @@
-import { View, Text, Pressable, Alert } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
@@ -36,9 +37,9 @@ export function DoctorTopBar() {
           router.push('/(doctor)/settings/profile')
         }}
         style={{
-          width: 40,
-          height: 40,
-          borderRadius: 20,
+          width: 42,
+          height: 42,
+          borderRadius: 21,
           backgroundColor: t.bg.tertiary,
           borderWidth: 1.5,
           borderColor: t.brand.tealGlow,
@@ -47,17 +48,11 @@ export function DoctorTopBar() {
           overflow: 'hidden',
         }}
       >
-        <Text
-          style={[
-            t.typography.bodySemi,
-            {
-              fontSize: 13,
-              color: t.brand.teal,
-            },
-          ]}
-        >
-          {initials}
-        </Text>
+        <Image
+          source={require('../../assets/images/doctor-demo.png')}
+          style={StyleSheet.absoluteFill}
+          placeholder="L6PZfSi_.AyE_3t7t7Rj4nMx9Fsq"
+        />
       </Pressable>
 
       <Pressable

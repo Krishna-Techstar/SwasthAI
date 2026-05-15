@@ -1,19 +1,20 @@
-// apps/mobile/app/(patient)/home.jsx
-// Patient Dashboard — premium health overview
-import { useMemo, useRef, useEffect } from 'react'
+import { useMemo, useRef, useEffect, useState } from 'react'
 import {
-  View, Text, Pressable, ScrollView, Animated, Easing,
+  View, Text, Pressable, ScrollView, Animated, Easing, Modal, Dimensions
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
+import QRCode from 'react-native-qrcode-svg'
 import { useAuthStore } from '../../store/authStore'
 import { doctorTheme as t } from '../../constants/doctorTheme'
 
+const { width } = Dimensions.get('window')
+
 const QUICK_ACTIONS = [
-  { icon: 'search-outline',       label: 'Find Doctor',   color: t.brand.teal },
-  { icon: 'calendar-outline',     label: 'Appointments',  color: t.brand.indigo },
-  { icon: 'document-text-outline', label: 'My Reports',   color: '#F59E0B' },
-  { icon: 'medical-outline',      label: 'Prescriptions', color: t.semantic.success },
+  { icon: 'qr-code-outline',      label: 'My QR ID',      color: t.brand.indigo, id: 'qr' },
+  { icon: 'search-outline',       label: 'Find Doctor',   color: t.brand.teal,   id: 'find' },
+  { icon: 'calendar-outline',     label: 'Appointments',  color: '#F59E0B',      id: 'apt' },
+  { icon: 'document-text-outline', label: 'My Reports',   color: t.semantic.success, id: 'rep' },
 ]
 
 const MOCK_APPOINTMENTS = [
@@ -30,7 +31,10 @@ const HEALTH_METRICS = [
 
 export default function PatientHome() {
   const user = useAuthStore((s) => s.user)
-  const displayName = user?.name ?? 'Guest'
+  const [showQR, setShowQR] = useState(false)
+  const displayName = user?.name ?? 'Krishna'
+  const ABHA_ID = "91-2345-6789-0123"
+  
   const now = useMemo(() => new Date(), [])
   const hour = now.getHours()
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening'
@@ -91,7 +95,14 @@ export default function PatientHome() {
           <Text style={{ ...t.typography.h3, color: t.text.primary, marginBottom: 12 }}>Quick Actions</Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {QUICK_ACTIONS.map((action) => (
-              <Pressable key={action.label} style={{ flex: 1, alignItems: 'center' }} onPress={() => Haptics.selectionAsync()}>
+              <Pressable 
+                key={action.label} 
+                style={{ flex: 1, alignItems: 'center' }} 
+                onPress={() => {
+                  Haptics.selectionAsync()
+                  if (action.id === 'qr') setShowQR(true)
+                }}
+              >
                 <View style={{
                   width: '100%', aspectRatio: 1, borderRadius: t.radius.card - 4,
                   backgroundColor: t.bg.secondary,
@@ -172,6 +183,36 @@ export default function PatientHome() {
           ))}
         </View>
       </ScrollView>
+
+      {/* QR Modal */}
+      <Modal visible={showQR} transparent animationType="fade" onRequestClose={() => setShowQR(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setShowQR(false)}>
+          <View style={styles.qrCard}>
+            <Text style={styles.qrTitle}>DIGITAL IDENTITY</Text>
+            <Text style={styles.qrName}>{displayName}</Text>
+            <Text style={styles.qrAbha}>ABHA: {ABHA_ID}</Text>
+            <View style={styles.qrWrapper}>
+              <QRCode value={ABHA_ID} size={200} color={t.brand.indigo} backgroundColor="#FFF" />
+            </View>
+            <Text style={styles.qrHint}>Present this code at any SwasthAI terminal for instant clinical check-in.</Text>
+            <Pressable onPress={() => setShowQR(false)} style={styles.closeBtn}>
+              <Text style={styles.closeBtnText}>Done</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </Animated.View>
   )
+}
+
+const styles = {
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
+  qrCard: { backgroundColor: '#FFF', borderRadius: 30, padding: 32, alignItems: 'center', width: width * 0.85 },
+  qrTitle: { ...t.typography.caption, color: t.text.muted, letterSpacing: 1.5, marginBottom: 12 },
+  qrName: { ...t.typography.h2, color: t.text.primary, marginBottom: 4 },
+  qrAbha: { ...t.typography.bodyMed, color: t.brand.indigo, marginBottom: 24 },
+  qrWrapper: { padding: 20, backgroundColor: '#FFF', borderRadius: 20, borderWidth: 1, borderColor: t.border.subtle },
+  qrHint: { ...t.typography.caption, color: t.text.muted, textAlign: 'center', marginTop: 24, lineHeight: 16 },
+  closeBtn: { marginTop: 32, backgroundColor: t.brand.indigo, paddingHorizontal: 40, paddingVertical: 14, borderRadius: 16 },
+  closeBtnText: { ...t.typography.bodySemi, color: '#FFF' },
 }

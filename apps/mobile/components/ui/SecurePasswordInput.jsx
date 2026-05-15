@@ -31,10 +31,18 @@ export function SecurePasswordInput({
   showStrength = false,
   error,
   label,
+  inputRef,
+  returnKeyType,
+  onSubmitEditing,
+  blurOnSubmit,
 }) {
   const [visible, setVisible] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
   const strength = useMemo(() => getStrength(value), [value])
+
+  const handleContainerPress = () => {
+    inputRef?.current?.focus()
+  }
 
   return (
     <View style={{ marginBottom: 14 }}>
@@ -46,7 +54,8 @@ export function SecurePasswordInput({
       )}
 
       {/* Input container */}
-      <View
+      <Pressable
+        onPress={handleContainerPress}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -70,6 +79,7 @@ export function SecurePasswordInput({
         <Ionicons name="lock-closed-outline" size={18} color={isFocused ? t.brand.teal : t.text.muted} />
 
         <TextInput
+          ref={inputRef}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -77,6 +87,9 @@ export function SecurePasswordInput({
           secureTextEntry={!visible}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          blurOnSubmit={blurOnSubmit}
           style={{
             flex: 1,
             height: 48,
@@ -90,10 +103,7 @@ export function SecurePasswordInput({
         <Pressable onPress={() => setVisible(!visible)} hitSlop={10}>
           <Ionicons name={visible ? 'eye-outline' : 'eye-off-outline'} size={20} color={t.text.muted} />
         </Pressable>
-
-        {/* Security indicator */}
-        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: value.length >= 8 ? t.semantic.success : t.text.muted }} />
-      </View>
+      </Pressable>
 
       {/* Strength meter */}
       {showStrength && value.length > 0 && (
