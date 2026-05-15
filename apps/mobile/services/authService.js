@@ -1,144 +1,108 @@
-// apps/mobile/services/authService.js
-// ============================================================
-// Auth Service — API layer for authentication flows
-// Backend-ready: swap mock implementations for real HTTP calls
-// ============================================================
+import { apiRequest, apiRole, appRole } from './httpClient'
 
-const API_BASE = process.env.EXPO_PUBLIC_AUTH_API_URL ?? 'http://localhost:3001'
-
-// ── Mock delay helper ─────────────────────────────────────────────────────────
-
-function mockDelay(ms = 800) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+function normalizeUser(user) {
+  if (!user) return user
+  return {
+    ...user,
+    name: user.fullName ?? user.name,
+    role: appRole(user.role),
+    verificationStatus:
+      user.approvalStatus === 'APPROVED' || user.approvalStatus === 'NOT_REQUIRED'
+        ? 'approved'
+        : user.approvalStatus === 'REJECTED'
+          ? 'rejected'
+          : 'review_pending',
+  }
 }
 
-// ── Auth API ──────────────────────────────────────────────────────────────────
-
 export const authService = {
-  /**
-   * Login with email/phone + password
-   * @returns {{ user, accessToken, refreshToken }}
-   */
   async login({ email, password }) {
-    await mockDelay(1000)
-    // Mock: return a doctor user for demo
-    return {
-      user: {
-        id: 'usr_001',
-        name: 'Dr. Rajan Kumar',
-        email: email || 'dr.rajan@swasthai.com',
-        phone: '+91 98765 43210',
-        role: 'Doctor',
-        verificationStatus: 'approved',
-        avatarInitials: 'RK',
-        specialization: 'General Medicine',
-        hospital: 'Apollo Clinic',
-        createdAt: new Date().toISOString(),
-      },
-      accessToken: 'mock_access_token_' + Date.now(),
-      refreshToken: 'mock_refresh_token_' + Date.now(),
-    }
+    const res = await apiRequest('/auth/login', {
+      method: 'POST',
+      body: { email, password },
+    })
+    return { ...res, user: normalizeUser(res.user) }
   },
 
-  /**
-   * Register a new user
-   */
   async signup({ role, basicDetails, roleDetails }) {
-    await mockDelay(1200)
-    const needsVerification = role === 'Doctor' || role === 'Nurse'
-    return {
-      user: {
-        id: 'usr_' + Date.now(),
-        name: basicDetails.name,
+    const res = await apiRequest('/auth/signup', {
+      method: 'POST',
+      body: {
+        role: apiRole(role),
+        fullName: basicDetails.name ?? basicDetails.fullName,
         email: basicDetails.email,
         phone: basicDetails.phone,
-        role,
-        verificationStatus: needsVerification ? 'doc_pending' : 'approved',
-        avatarInitials: basicDetails.name
-          .split(' ')
-          .map((w) => w[0])
-          .join('')
-          .toUpperCase()
-          .slice(0, 2),
-        ...roleDetails,
-        createdAt: new Date().toISOString(),
+        password: basicDetails.password,
+        abhaId: roleDetails?.abhaId,
+        hospitalId: roleDetails?.hospitalId,
+        registrationNumber: roleDetails?.registrationNumber,
+        specialization: roleDetails?.specialization,
+        licenseNumber: roleDetails?.licenseNumber ?? roleDetails?.license,
+        department: roleDetails?.department,
+        experienceYears: Number(roleDetails?.experienceYears ?? roleDetails?.experience) || undefined,
+        dateOfBirth: roleDetails?.dob ?? roleDetails?.dateOfBirth,
+        gender: roleDetails?.gender,
+        bloodGroup: roleDetails?.bloodGroup,
+        address: roleDetails?.address,
       },
-      accessToken: 'mock_access_token_' + Date.now(),
-      refreshToken: 'mock_refresh_token_' + Date.now(),
-    }
+    })
+    return { ...res, user: normalizeUser(res.user) }
   },
 
-  /**
-   * Send OTP to phone number
-   */
   async sendOTP(phone) {
-    await mockDelay(600)
-    return { success: true, message: 'OTP sent to ' + phone }
+    return apiRequest('/auth/otp/send', {
+      method: 'POST',
+      body: { phone },
+    })
   },
 
-  /**
-   * Verify OTP
-   */
   async verifyOTP(phone, otp) {
-    await mockDelay(800)
-    if (otp === '123456' || otp.length === 6) {
-      return { success: true, verified: true }
-    }
-    throw new Error('Invalid OTP. Please try again.')
+    return apiRequest('/auth/otp/verify', {
+      method: 'POST',
+      body: { phone, otp },
+    })
   },
 
-  /**
-   * Send password reset email/SMS
-   */
   async forgotPassword(email) {
-    await mockDelay(800)
-    return { success: true, message: 'Reset link sent to ' + email }
+    return apiRequest('/auth/password/forgot', {
+      method: 'POST',
+      body: { email },
+    })
   },
 
-  /**
-   * Reset password with token
-   */
   async resetPassword(token, newPassword) {
-    await mockDelay(800)
-    return { success: true }
+    return apiRequest('/auth/password/reset', {
+      method: 'POST',
+      body: { token, newPassword },
+    })
   },
 
-  /**
-   * Refresh access token
-   */
   async refreshToken(refreshToken) {
-    await mockDelay(300)
-    return {
-      accessToken: 'mock_access_token_' + Date.now(),
-      refreshToken: 'mock_refresh_token_' + Date.now(),
-    }
+    return apiRequest('/auth/refresh', {
+      method: 'POST',
+      body: { refreshToken },
+    })
   },
 
-  /**
-   * Upload verification documents
-   */
   async uploadDocument(userId, docType, fileUri) {
-    await mockDelay(1500)
-    return {
-      success: true,
-      documentId: 'doc_' + Date.now(),
-      status: 'uploaded',
-    }
+    return apiRequest('/files/sign-upload', {
+      method: 'POST',
+      body: {
+        provider: process.env.EXPO_PUBLIC_STORAGE_PROVIDER ?? 'CLOUDINARY',
+        category: 'VERIFICATION_DOCUMENT',
+        fileName: fileUri.split('/').pop() ?? `${docType}.bin`,
+        mimeType: 'application/octet-stream',
+        sizeBytes: 0,
+      },
+    })
   },
 
-  /**
-   * Check verification status
-   */
-  async checkVerificationStatus(userId) {
-    await mockDelay(500)
-    return { status: 'review_pending' }
+  async checkVerificationStatus() {
+    const res = await apiRequest('/users/me')
+    return { status: normalizeUser(res).verificationStatus }
   },
 
-  /**
-   * Logout — invalidate tokens server-side
-   */
-  async logout(accessToken) {
-    await mockDelay(200)
-    return { success: true }
+  async logout() {
+    return apiRequest('/auth/logout', { method: 'POST', body: {} })
   },
 }

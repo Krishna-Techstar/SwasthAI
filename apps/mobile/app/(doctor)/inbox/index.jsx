@@ -14,7 +14,6 @@ import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useChatStore } from '../../../store/chatStore'
 import { ConversationItem } from '../../../components/chat/ConversationItem'
-import { mockConversations } from '../../../constants/mockChats'
 import { doctorTheme as t } from '../../../constants/doctorTheme'
 
 const FILTERS = [
@@ -90,22 +89,15 @@ export default function InboxScreen() {
   const [loading,      setLoading]       = useState(true)
   const [refreshing,   setRefreshing]    = useState(false)
 
-  // Load mock data on mount
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setConversations(mockConversations)
-      setLoading(false)
-    }, 600)
-    return () => clearTimeout(timer)
+    setLoading(false)
   }, [setConversations])
 
   const onRefresh = useCallback(() => {
     setRefreshing(true)
-    setTimeout(() => {
-      setConversations(mockConversations)
-      setRefreshing(false)
-    }, 800)
-  }, [setConversations])
+    setConversations(conversations)
+    setRefreshing(false)
+  }, [conversations, setConversations])
 
   const filtered = conversations.filter((c) => {
     const matchesFilter = activeFilter === 'ALL' || c.type === activeFilter

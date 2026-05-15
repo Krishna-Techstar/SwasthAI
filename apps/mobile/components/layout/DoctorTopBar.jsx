@@ -87,7 +87,7 @@ export function DoctorTopBar() {
       <Pressable
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-          Alert.alert('Camera', 'Coming soon')
+          router.push('/(doctor)/consultation/new')
         }}
         style={{
           width: 40,

@@ -20,7 +20,6 @@ import { ChatInput } from '../../../components/chat/ChatInput'
 import { TypingIndicator } from '../../../components/chat/TypingIndicator'
 import { QuickReplyChips } from '../../../components/chat/QuickReplyChips'
 import { OnlineIndicator } from '../../../components/chat/OnlineIndicator'
-import { mockMessages, mockConversations } from '../../../constants/mockChats'
 import { doctorTheme as t } from '../../../constants/doctorTheme'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -90,7 +89,7 @@ export default function ChatScreen() {
   const { id: convId } = useLocalSearchParams()
   const flatListRef = useRef(null)
 
-  const { messages: allMessages, setMessages, appendMessage, sendMessage, sendTyping, typingUsers, markRead } = useChatStore()
+  const { conversations, messages: allMessages, sendMessage, sendTyping, typingUsers, markRead } = useChatStore()
   const msgs = allMessages[convId] ?? []
 
   const [loading,           setLoading]           = useState(true)
@@ -103,25 +102,16 @@ export default function ChatScreen() {
 
   // Find conversation for header info
   const conversation = useMemo(() =>
-    mockConversations.find((c) => c.id === convId),
-    [convId]
+    conversations.find((c) => c.id === convId),
+    [conversations, convId]
   )
   const other = conversation?.participants[0]
 
-  // Load mock messages
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const initial = mockMessages[convId] ?? []
-      setMessages(convId, initial)
-      setLoading(false)
-      markRead(convId)
-      // Show quick replies if last message is from other person
-      if (initial.length > 0 && initial[initial.length - 1]?.senderId !== 'me') {
-        setShowQuickReplies(true)
-      }
-    }, 400)
-    return () => clearTimeout(timer)
-  }, [convId, setMessages, markRead])
+    setLoading(false)
+    markRead(convId)
+    setShowQuickReplies(false)
+  }, [convId, markRead])
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {

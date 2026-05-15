@@ -10,10 +10,10 @@ import { PillButton } from '../../components/ui/PillButton';
 import { ArrowLeft } from 'lucide-react-native';
 
 const schema = z.object({
-  fullName: z.string().min(2, "Full name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().min(10, "Valid phone number required"),
-  password: z.string().min(8, "Password must be at least 8 characters")
+  fullName: z.string().min(1, "Full name is required"),
+  email: z.string().min(1, "Email is required"),
+  phone: z.string().min(1, "Phone number required"),
+  password: z.string().min(1, "Password is required")
 });
 
 export default function BasicDetailsScreen() {

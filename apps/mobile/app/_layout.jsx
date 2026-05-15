@@ -10,6 +10,7 @@ import {
 } from '@expo-google-fonts/dm-sans'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { AppProviders } from '../components/providers/AppProviders'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -35,17 +36,19 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#FAFAFC' } }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="onboarding" />
-          <Stack.Screen name="(doctor)" />
-          <Stack.Screen name="(patient)" />
-          <Stack.Screen name="(nurse)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        </Stack>
-      </SafeAreaProvider>
+      <AppProviders>
+        <SafeAreaProvider>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#FAFAFC' } }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="onboarding" />
+            <Stack.Screen name="(doctor)" />
+            <Stack.Screen name="(patient)" />
+            <Stack.Screen name="(nurse)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          </Stack>
+        </SafeAreaProvider>
+      </AppProviders>
     </GestureHandlerRootView>
   )
 }

@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics'
 import { doctorTheme as t } from '../../constants/doctorTheme'
 import { SCAN_TYPES } from '../../constants/medicalConstants'
 
-export function RadiologyUploader({ uploads, onPickImage, onRemoveUpload, onAnalyze, isAnalyzing }) {
+export function RadiologyUploader({ uploads, onPickImage, onRemoveUpload, onAnalyze, isAnalyzing, error }) {
   const [selectedType, setSelectedType] = useState('xray')
 
   return (
@@ -49,6 +49,11 @@ export function RadiologyUploader({ uploads, onPickImage, onRemoveUpload, onAnal
           X-Ray · CT · MRI · DICOM · PNG/JPG
         </Text>
       </Pressable>
+      {error ? (
+        <Text style={{ ...t.typography.caption, color: t.semantic.error, textAlign: 'center' }}>
+          {error}
+        </Text>
+      ) : null}
 
       {/* Uploaded files */}
       {uploads?.length > 0 && (

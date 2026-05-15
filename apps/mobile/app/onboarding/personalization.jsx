@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
-import { View, Text, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { useOnboardingStore } from '../../store/useOnboardingStore';
-import { PillButton } from '../../components/ui/PillButton';
 import { Check } from 'lucide-react-native';
+import { useState } from 'react';
+import { SafeAreaView, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { PillButton } from '../../components/ui/PillButton';
+import { authService } from '../../services/authService';
+import { useAuthStore } from '../../store/authStore';
+import { useOnboardingStore } from '../../store/useOnboardingStore';
 
 export default function PersonalizationScreen() {
-  const { setPreferences } = useOnboardingStore();
+  const { role, basicDetails, roleDetails, setPreferences } = useOnboardingStore();
+  const { completeLogin, setLoading, isLoading } = useAuthStore();
   const [selectedLangs, setSelectedLangs] = useState(['English']);
+  const [error, setError] = useState(null);
 
   const languages = ['English', 'Hindi', 'Marathi', 'Tamil', 'Telugu', 'Bengali'];
 
@@ -15,10 +19,27 @@ export default function PersonalizationScreen() {
     setSelectedLangs(prev => prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang]);
   };
 
-  const onComplete = () => {
-    setPreferences({ languages: selectedLangs });
-    // Go to main app
-    router.push('/');
+  const onComplete = async () => {
+    if (!basicDetails || !role) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      setPreferences({ languages: selectedLangs });
+      const result = await authService.signup({ role, basicDetails, roleDetails });
+      completeLogin(result);
+
+      if (role === "Doctor" || role === "Nurse") {
+        router.replace("/onboarding/pending");
+      } else {
+        const home = useAuthStore.getState().getHomeRoute();
+        router.replace(home);
+      }
+    } catch (err) {
+      setError(err.message || "Signup failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,8 +71,18 @@ export default function PersonalizationScreen() {
 
       </ScrollView>
 
+      {error ? (
+        <View className="px-6 pt-2">
+          <Text className="text-xs text-red-600">{error}</Text>
+        </View>
+      ) : null}
       <View className="p-6 border-t border-gray-100 dark:border-gray-800 bg-surface-light dark:bg-surface-dark items-center">
-        <PillButton label="Complete Setup" onPress={onComplete} className="w-full mb-4" />
+        <PillButton 
+          label={isLoading ? "Creating Account..." : "Complete Setup"} 
+          onPress={onComplete} 
+          disabled={!selectedLangs.length || isLoading} 
+          className="w-full mb-4" 
+        />
         <Text className="text-text-secondary text-xs text-center font-inter_400Regular">
           By continuing, you agree to our Terms of Service & Privacy Policy. Data is secured and ABHA compliant.
         </Text>

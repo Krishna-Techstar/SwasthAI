@@ -9,10 +9,20 @@ import { PremiumInput } from '../../components/ui/PremiumInput';
 export default function VerificationScreen() {
   const { basicDetails } = useOnboardingStore();
   const [otp, setOtp] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const onVerify = () => {
-    // Mock OTP verification success
-    router.push('/onboarding/personalization');
+  const onVerify = async () => {
+    if (!otp.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      router.push('/onboarding/personalization');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,7 +39,7 @@ export default function VerificationScreen() {
 
           <Text className="font-outfit_700Bold text-3xl text-text-primary dark:text-white mb-2">Verify Phone</Text>
           <Text className="font-inter_400Regular text-text-secondary dark:text-gray-400 text-base mb-8">
-            We've sent a 6-digit secure code to {basicDetails?.phone || '+91 ••••• •••••'}.
+            OTP delivery is not connected yet. Enter any placeholder code for {basicDetails?.phone || '+91 ***** *****'}.
           </Text>
 
           <PremiumInput 
@@ -39,6 +49,9 @@ export default function VerificationScreen() {
             value={otp} 
             onChangeText={setOtp} 
           />
+          {error ? (
+            <Text className="mt-3 text-sm text-red-600">{error}</Text>
+          ) : null}
           
           <TouchableOpacity className="mt-4 items-center">
             <Text className="text-primary font-inter_500Medium">Resend Code in 00:45</Text>
@@ -47,7 +60,7 @@ export default function VerificationScreen() {
         </View>
 
         <View className="p-6 border-t border-gray-100 dark:border-gray-800 bg-surface-light dark:bg-surface-dark">
-          <PillButton label="Verify & Secure Account" onPress={onVerify} disabled={otp.length !== 6} className={otp.length !== 6 ? 'opacity-50' : ''} />
+          <PillButton label={loading ? 'Verifying...' : 'Verify & Secure Account'} onPress={onVerify} disabled={!otp.trim() || loading} className={!otp.trim() || loading ? 'opacity-50' : ''} />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

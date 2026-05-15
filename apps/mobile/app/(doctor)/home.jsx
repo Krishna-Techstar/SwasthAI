@@ -13,103 +13,16 @@ import {
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '../../store/authStore'
-import { useConsultationStore } from '../../store/consultationStore'
 import { doctorTheme as t } from '../../constants/doctorTheme'
+import { queryKeys } from '../../services/queryClient'
+import { userService } from '../../services/userService'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const CARD_CONTENT_W = SCREEN_W - t.space.base * 2
 
-// ─── Intelligence Cards Data ─────────────────────────────────────────────────
-
-const INTEL_CARDS = [
-  {
-    id: 'next_patient',
-    label: 'NEXT UP · IN 4 MINS',
-    dotType: 'live',            // pulsing green
-    dotColor: '#22C55E',
-    headline: 'Mohan Kumar, 58M — Chest Pain',
-    barLabel: 'AI pre-loading history',
-    barValue: 0.72,
-    barColor: '#8B5CF6',
-    footer: '2 drug flags  ·  Last visit: 3 months ago',
-    footerIcon: 'warning-outline',
-    accentColor: '#8B5CF6',
-  },
-  {
-    id: 'ai_brief',
-    label: "TODAY'S BRIEF",
-    dotType: 'pulse',
-    dotColor: '#8B5CF6',
-    headline: '3 high-risk patients · 2 flags pending',
-    barLabel: 'Day completion — 11 of 23 seen',
-    barValue: 0.48,
-    barColor: '#22C55E',
-    footer: 'Est. 2.4 hrs remaining  ·  On track',
-    footerIcon: 'time-outline',
-    accentColor: '#22C55E',
-  },
-  {
-    id: 'billing',
-    label: 'ICD-10 AUTO-CODING',
-    dotType: 'live',
-    dotColor: '#22C55E',
-    headline: '18 claims coded, ₹0 errors today',
-    barLabel: 'Claim success rate',
-    barValue: 0.91,
-    barColor: '#22C55E',
-    footer: '2 pending review  ·  1 rejected yesterday',
-    footerIcon: 'receipt-outline',
-    accentColor: '#A78BFA',
-  },
-  {
-    id: 'second_opinion',
-    label: 'PEER CONSULT',
-    dotType: 'live',
-    dotColor: '#22C55E',
-    headline: 'Dr. Mehta responded on Mohan Kumar',
-    barLabel: 'Case completeness for sharing',
-    barValue: 0.85,
-    barColor: '#8B5CF6',
-    footer: 'Cardiology  ·  Sent 22 mins ago',
-    footerIcon: 'people-outline',
-    accentColor: '#C4B5FD',
-  },
-  {
-    id: 'lab_alert',
-    label: 'NEW REPORTS IN',
-    dotType: 'pulse',
-    dotColor: '#FACC15',
-    headline: "Priya Sharma's HbA1c is back",
-    barLabel: 'AI match score',
-    barValue: 0.96,
-    barColor: '#FACC15',
-    footer: 'Flagged: LDL elevated  ·  Needs review',
-    footerIcon: 'flask-outline',
-    accentColor: '#FACC15',
-  },
-]
-
-// ─── Stat marquee data ───────────────────────────────────────────────────────
-
-const mockStats = [
-  { icon: 'people-outline',  value: '23', label: "Today's patients", trend: '↑ 3 from yest.', trendColor: t.semantic.success, color: t.brand.indigo },
-  { icon: 'warning-outline', value: '2',  label: 'Drug alerts',       trend: 'Needs review',   trendColor: t.semantic.warning, color: t.semantic.warning },
-  { icon: 'medical-outline', value: '18', label: 'Claims coded',      trend: '100% today',     trendColor: t.semantic.success, color: t.semantic.success },
-]
-const MARQUEE_ITEMS = [...mockStats, ...mockStats, ...mockStats]
 const CARD_W = 110
-
-const mockFlags = [
-  { label: 'Pap smear overdue', count: '3 pts', color: t.semantic.error },
-  { label: 'HbA1c check',       count: '5 pts', color: t.semantic.warning },
-]
-
-const mockQueue = [
-  { id: '1', initials: 'PS', name: 'Priya Sharma',  age: 32, gender: 'F', type: 'Follow-up', reason: 'Hypertension', status: 'in_consult', statusLabel: 'In consult', waitTime: '8:32m', avatarColor: t.brand.indigo },
-  { id: '2', initials: 'MK', name: 'Mohan Kumar',   age: 58, gender: 'M', type: 'New',       reason: 'Chest pain',   status: 'drug_flag',  statusLabel: 'Drug flag',  urgent: true,     avatarColor: t.semantic.warning },
-  { id: '3', initials: 'AJ', name: 'Aarti Joshi',   age: 24, gender: 'F', type: 'New',       reason: 'Fever 3 days', status: 'waiting',    statusLabel: 'Waiting 12m',               avatarColor: t.semantic.success },
-]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -120,6 +33,94 @@ function greetingWord(hour) {
   if (hour < 12) return 'Good Morning,'
   if (hour < 17) return 'Good Afternoon,'
   return 'Good Evening,'
+}
+
+function buildIntelCards(dashboard) {
+  const stats = dashboard?.stats ?? []
+  const firstQueue = dashboard?.queue?.[0]
+  const todayPatients = stats.find((item) => item.key === 'todayPatients')?.value ?? 0
+  const aiQueue = stats.find((item) => item.key === 'aiQueue')?.value ?? 0
+  const reportReviews = stats.find((item) => item.key === 'reportReviews')?.value ?? 0
+
+  return [
+    {
+      id: 'next_patient',
+      label: firstQueue ? 'NEXT APPOINTMENT' : 'CARE QUEUE',
+      dotType: firstQueue ? 'live' : 'pulse',
+      dotColor: firstQueue ? '#22C55E' : '#8B5CF6',
+      headline: firstQueue ? `${firstQueue.name} - ${firstQueue.reason ?? firstQueue.type}` : 'No live appointments returned by API',
+      barLabel: 'Today queue load',
+      barValue: Math.min(todayPatients / 20, 1),
+      barColor: '#8B5CF6',
+      footer: firstQueue ? new Date(firstQueue.scheduledStart).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Waiting for backend data',
+      footerIcon: firstQueue ? 'time-outline' : 'information-circle-outline',
+      accentColor: '#8B5CF6',
+    },
+    {
+      id: 'ai_brief',
+      label: 'AI QUEUE',
+      dotType: aiQueue ? 'live' : 'pulse',
+      dotColor: aiQueue ? '#FACC15' : '#22C55E',
+      headline: `${aiQueue} AI jobs queued or running`,
+      barLabel: 'Inference queue pressure',
+      barValue: Math.min(aiQueue / 10, 1),
+      barColor: aiQueue ? '#FACC15' : '#22C55E',
+      footer: 'Sourced from ai_processing_jobs',
+      footerIcon: 'sparkles-outline',
+      accentColor: '#22C55E',
+    },
+    {
+      id: 'report_reviews',
+      label: 'REPORT REVIEWS',
+      dotType: reportReviews ? 'live' : 'pulse',
+      dotColor: reportReviews ? '#FACC15' : '#22C55E',
+      headline: `${reportReviews} SOAP reports need review`,
+      barLabel: 'Review workload',
+      barValue: Math.min(reportReviews / 10, 1),
+      barColor: '#8B5CF6',
+      footer: 'Draft, AI-generated, and under-review reports',
+      footerIcon: 'document-text-outline',
+      accentColor: '#A78BFA',
+    },
+  ]
+}
+
+function buildStats(dashboard) {
+  return (dashboard?.stats ?? []).map((item, index) => ({
+    icon: index === 0 ? 'people-outline' : index === 1 ? 'warning-outline' : 'pulse-outline',
+    value: String(item.value ?? 0),
+    label: item.label,
+    trend: item.trend,
+    trendColor: item.value > 0 ? t.semantic.success : t.text.muted,
+    color: index === 1 ? t.semantic.warning : t.brand.indigo,
+  }))
+}
+
+function buildFlags(dashboard) {
+  return (dashboard?.flags ?? []).map((flag, index) => ({
+    label: flag.label,
+    count: String(flag.count),
+    color: index === 0 ? t.semantic.warning : t.brand.teal,
+  }))
+}
+
+function buildQueue(dashboard) {
+  return (dashboard?.queue ?? []).map((item, index) => ({
+    ...item,
+    initials: initials(item.name),
+    statusLabel: item.statusLabel ?? item.status,
+    avatarColor: [t.brand.indigo, t.semantic.warning, t.semantic.success][index % 3],
+  }))
+}
+
+function initials(name = '') {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase() || '?'
 }
 
 // ─── Animated dots ────────────────────────────────────────────────────────────
@@ -250,11 +251,13 @@ function IntelCard({ card }) {
 
 // ─── Intelligence Carousel (5 cards, auto-cycles every 5 s) ─────────────────
 
-function IntelCarousel() {
+function IntelCarousel({ cards }) {
   const [activeIdx, setActiveIdx] = useState(0)
   const fadeAnim    = useRef(new Animated.Value(1)).current
   const slideAnim   = useRef(new Animated.Value(0)).current
   const timerRef    = useRef(null)
+
+  const activeCards = cards?.length ? cards : buildIntelCards(null)
 
   const advance = useCallback((next) => {
     // Slide out + fade out
@@ -275,20 +278,20 @@ function IntelCarousel() {
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setActiveIdx(prev => {
-        const next = (prev + 1) % INTEL_CARDS.length
+        const next = (prev + 1) % activeCards.length
         advance(next)
         return prev // state update happens inside advance callback
       })
     }, 5000)
     return () => clearInterval(timerRef.current)
-  }, [advance])
+  }, [advance, activeCards.length])
 
   const handleDot = (idx) => {
     clearInterval(timerRef.current)
     advance(idx)
     timerRef.current = setInterval(() => {
       setActiveIdx(prev => {
-        const next = (prev + 1) % INTEL_CARDS.length
+        const next = (prev + 1) % activeCards.length
         advance(next)
         return prev
       })
@@ -299,12 +302,12 @@ function IntelCarousel() {
     <View style={{ marginTop: t.space.md, marginBottom: t.space.sm }}>
       {/* Card */}
       <Animated.View style={{ opacity: fadeAnim, transform: [{ translateX: slideAnim }] }}>
-        <IntelCard card={INTEL_CARDS[activeIdx]} />
+        <IntelCard card={activeCards[activeIdx] ?? activeCards[0]} />
       </Animated.View>
 
       {/* Dot indicators */}
       <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 10 }}>
-        {INTEL_CARDS.map((_, i) => (
+        {activeCards.map((_, i) => (
           <Pressable key={i} onPress={() => handleDot(i)}>
             <View style={{
               width: i === activeIdx ? 18 : 6,
@@ -322,14 +325,14 @@ function IntelCarousel() {
 
 // ─── Infinite horizontal marquee ──────────────────────────────────────────────
 
-const TOTAL_MARQUEE_W = CARD_W * mockStats.length
-
-function InfiniteMarquee() {
+function InfiniteMarquee({ items }) {
   const translateX = useRef(new Animated.Value(0)).current
+  const chips = items?.length ? [...items, ...items, ...items] : []
+  const totalWidth = CARD_W * Math.max(items?.length ?? 0, 1)
   useEffect(() => {
     const anim = Animated.loop(
       Animated.timing(translateX, {
-        toValue: -TOTAL_MARQUEE_W,
+        toValue: -totalWidth,
         duration: 8000,
         easing: Easing.linear,
         useNativeDriver: true,
@@ -337,12 +340,12 @@ function InfiniteMarquee() {
     )
     anim.start()
     return () => anim.stop()
-  }, [translateX])
+  }, [totalWidth, translateX])
 
   return (
     <View style={{ height: 148, overflow: 'hidden', marginBottom: t.space.md }}>
       <Animated.View style={{ flexDirection: 'row', paddingVertical: 4, transform: [{ translateX }] }}>
-        {MARQUEE_ITEMS.map((chip, i) => (
+        {chips.map((chip, i) => (
           <View
             key={i}
             style={{
@@ -456,7 +459,7 @@ function QueueRow({ item, index }) {
               <StatusBadge item={item} />
             </View>
             <Text style={{ ...t.typography.body, color: t.text.secondary, marginTop: 3 }}>
-              {item.age}yrs · {item.gender} · {item.type} — {item.reason}
+              {[item.type, item.reason].filter(Boolean).join(' - ') || 'Appointment from API'}
             </Text>
             {item.waitTime && (
               <Text style={{ ...t.typography.caption, color: t.text.muted, marginTop: 4 }}>{item.waitTime}</Text>
@@ -472,8 +475,17 @@ function QueueRow({ item, index }) {
 
 export default function DoctorHomeScreen() {
   const user = useAuthStore(s => s.user)
-  const [queueLoading, setQueueLoading] = useState(true)
   const [refreshing,   setRefreshing]   = useState(false)
+  const dashboardQuery = useQuery({
+    queryKey: queryKeys.myDashboard,
+    queryFn: userService.dashboard,
+    refetchInterval: 30_000,
+  })
+  const dashboard = dashboardQuery.data
+  const dashboardStats = useMemo(() => buildStats(dashboard), [dashboard])
+  const dashboardFlags = useMemo(() => buildFlags(dashboard), [dashboard])
+  const dashboardQueue = useMemo(() => buildQueue(dashboard), [dashboard])
+  const intelCards = useMemo(() => buildIntelCards(dashboard), [dashboard])
 
   const now  = useMemo(() => new Date(), [])
   const hour = now.getHours()
@@ -483,15 +495,10 @@ export default function DoctorHomeScreen() {
     return /^dr\.?\s/i.test(raw) ? raw : `Dr. ${raw}`
   }, [user?.name])
 
-  useEffect(() => {
-    const tmr = setTimeout(() => setQueueLoading(false), 1200)
-    return () => clearTimeout(tmr)
-  }, [])
-
   const onRefresh = useCallback(() => {
     setRefreshing(true)
-    setTimeout(() => setRefreshing(false), 900)
-  }, [])
+    dashboardQuery.refetch().finally(() => setRefreshing(false))
+  }, [dashboardQuery])
 
   const ListHeader = (
     <View style={{ paddingBottom: t.space.base }}>
@@ -510,10 +517,10 @@ export default function DoctorHomeScreen() {
       </Text>
 
       {/* ── Intelligence Cards Carousel ── */}
-      <IntelCarousel />
+      <IntelCarousel cards={intelCards} />
 
       {/* Stat marquee */}
-      <InfiniteMarquee />
+      <InfiniteMarquee items={dashboardStats} />
 
       {/* Preventive Flags */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: t.space.lg, marginBottom: t.space.sm }}>
@@ -524,7 +531,7 @@ export default function DoctorHomeScreen() {
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.space.sm, marginBottom: t.space.lg }}>
-        {mockFlags.map(flag => (
+        {dashboardFlags.length ? dashboardFlags.map(flag => (
           <View key={flag.label} style={{
             flexDirection: 'row', alignItems: 'center', gap: 6,
             backgroundColor: t.bg.secondary, borderWidth: 1, borderColor: t.border.subtle,
@@ -535,14 +542,16 @@ export default function DoctorHomeScreen() {
               {flag.label} · <Text style={{ color: t.text.secondary }}>{flag.count}</Text>
             </Text>
           </View>
-        ))}
+        )) : (
+          <Text style={{ ...t.typography.body, color: t.text.muted }}>No preventive flags returned by API.</Text>
+        )}
       </View>
 
       {/* Queue header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: t.space.sm }}>
         <Text style={{ ...t.typography.h3, color: t.text.primary }}>Today&apos;s Queue</Text>
         <View style={{ backgroundColor: t.brand.tealDim, paddingHorizontal: 10, paddingVertical: 4, borderRadius: t.radius.chip }}>
-          <Text style={{ ...t.typography.bodySemi, fontSize: 12, color: t.brand.teal }}>5 waiting</Text>
+          <Text style={{ ...t.typography.bodySemi, fontSize: 12, color: t.brand.teal }}>{dashboardQueue.length} waiting</Text>
         </View>
       </View>
     </View>
@@ -550,13 +559,13 @@ export default function DoctorHomeScreen() {
 
   return (
     <FlatList
-      data={queueLoading ? [] : mockQueue}
+      data={dashboardQuery.isLoading ? [] : dashboardQueue}
       keyExtractor={row => row.id}
       renderItem={({ item, index }) => <QueueRow item={item} index={index} />}
       ListHeaderComponent={
         <View style={{ paddingHorizontal: t.space.base, paddingTop: t.space.md }}>
           {ListHeader}
-          {queueLoading && <QueueSkeleton />}
+          {dashboardQuery.isLoading && <QueueSkeleton />}
         </View>
       }
       style={{ backgroundColor: '#FAFAFC' }}
@@ -573,3 +582,4 @@ export default function DoctorHomeScreen() {
     />
   )
 }
+

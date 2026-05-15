@@ -135,9 +135,9 @@ export default function DoctorSignup() {
       setStep(step + 1)
       return
     }
-    setBasicDetails({ name, email, phone })
+    setBasicDetails({ name, email, phone, password })
     setRoleDetails({
-      regNumber, specialization: spec, experience, hospital,
+      regNumber, registrationNumber: regNumber, specialization: spec, experience, hospital,
       consultType, languages, fees, bio, address, documents: docs,
     })
     router.push('/onboarding/otp')

@@ -110,7 +110,7 @@ export default function PatientSignup() {
       return
     }
     // Final submit
-    setBasicDetails({ name, email, phone })
+    setBasicDetails({ name, email, phone, password })
     setRoleDetails({
       gender, dob, blood, emergency, address,
       conditions, allergies, height, weight,

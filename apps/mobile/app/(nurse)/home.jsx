@@ -168,7 +168,7 @@ export default function NurseHome() {
 
         {/* Tasks */}
         <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
-          <Text style={{ ...t.typography.h3, color: t.text.primary, marginBottom: 10 }}>Today's Tasks</Text>
+          <Text style={{ ...t.typography.h3, color: t.text.primary, marginBottom: 10 }}>Today&apos;s Tasks</Text>
           {MOCK_TASKS.map((task) => (
             <View key={task.id} style={{
               backgroundColor: t.bg.secondary, borderWidth: 1, borderColor: t.border.subtle,

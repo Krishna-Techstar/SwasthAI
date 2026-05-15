@@ -99,8 +99,8 @@ export default function NurseSignup() {
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     if (step < 2) { setStep(step + 1); return }
-    setBasicDetails({ name, email, phone })
-    setRoleDetails({ licenseNo, hospital, department, experience, shift, address, documents: docs })
+    setBasicDetails({ name, email, phone, password })
+    setRoleDetails({ licenseNo, licenseNumber: licenseNo, hospital, department, experience, shift, address, documents: docs })
     router.push('/onboarding/otp')
   }
 

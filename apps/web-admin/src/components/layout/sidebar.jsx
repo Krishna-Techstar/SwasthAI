@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   BarChart3,
@@ -25,6 +26,8 @@ import {
 } from "lucide-react";
 import { SIDEBAR_NAV } from "@/lib/constants";
 import { useAdminStore } from "@/store/admin-store";
+import { adminDataApi } from "@/lib/admin-api";
+import { adminQueryKeys } from "@/lib/query-client";
 import { cn } from "@/lib/utils";
 
 const ICON_MAP = {
@@ -47,6 +50,30 @@ export function Sidebar() {
   const pathname = usePathname();
   const { sidebarCollapsed, toggleSidebar, hasPermission } = useAdminStore();
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Live badge counts from API
+  const dashboardQuery = useQuery({
+    queryKey: adminQueryKeys.dashboard,
+    queryFn: adminDataApi.dashboard,
+    refetchInterval: 30_000,
+    staleTime: 20_000,
+  });
+  const notificationsQuery = useQuery({
+    queryKey: adminQueryKeys.notifications({}),
+    queryFn: () => adminDataApi.notifications({ limit: 1 }),
+    refetchInterval: 30_000,
+    staleTime: 20_000,
+  });
+
+  const liveBadges = useMemo(() => {
+    const d = dashboardQuery.data;
+    const n = notificationsQuery.data;
+    return {
+      verification: d?.queues?.pendingApprovals ?? 0,
+      "ai-diagnostics": d?.queues?.pendingAiJobs ?? 0,
+      notifications: n?.unreadCount ?? 0,
+    };
+  }, [dashboardQuery.data, notificationsQuery.data]);
 
   const filteredNav = SIDEBAR_NAV.filter((item) => hasPermission(item.id)).filter((item) =>
     item.label.toLowerCase().includes(searchQuery.toLowerCase())
@@ -104,6 +131,7 @@ export function Sidebar() {
         {filteredNav.map((item, index) => {
           const Icon = ICON_MAP[item.icon] ?? LayoutDashboard;
           const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
+          const badgeCount = liveBadges[item.id] ?? item.badge;
 
           return (
             <Link key={item.id} href={item.path}>
@@ -140,7 +168,7 @@ export function Sidebar() {
                   )}
                 </AnimatePresence>
 
-                {item.badge > 0 && (
+                {badgeCount > 0 && (
                   <span
                     className={cn(
                       "ml-auto text-[10px] font-semibold rounded-full min-w-[18px] h-[18px] flex items-center justify-center",
@@ -148,7 +176,7 @@ export function Sidebar() {
                       sidebarCollapsed && "absolute -top-0.5 -right-0.5 ml-0"
                     )}
                   >
-                    {item.badge}
+                    {badgeCount}
                   </span>
                 )}
 

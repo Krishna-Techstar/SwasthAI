@@ -1,7 +1,8 @@
 // apps/mobile/components/ui/UploadBox.jsx
 import { useState, useRef } from 'react'
-import { View, Text, Pressable, Animated, Easing, ActivityIndicator } from 'react-native'
+import { View, Text, Pressable, Animated, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import * as DocumentPicker from 'expo-document-picker'
 import { doctorTheme as t } from '../../constants/doctorTheme'
 
 const STATUS = {
@@ -14,40 +15,55 @@ const STATUS = {
 export function UploadBox({ label, description, accept = 'PDF / Image', onUpload, required = false }) {
   const [status, setStatus]     = useState(STATUS.IDLE)
   const [fileName, setFileName] = useState(null)
-  const [progress, setProgress] = useState(0)
+  const [errorMessage, setErrorMessage] = useState(null)
   const progressAnim = useRef(new Animated.Value(0)).current
 
   const handlePress = async () => {
     if (status === STATUS.DONE) return
 
-    setStatus(STATUS.UPLOADING)
-    setProgress(0)
-
-    // Simulate upload progress
-    Animated.timing(progressAnim, {
-      toValue: 1,
-      duration: 2000,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start()
+    setErrorMessage(null)
 
     try {
-      // In real app: call DocumentPicker here
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      setFileName('document.pdf')
-      setStatus(STATUS.DONE)
-      setProgress(1)
-      onUpload?.({ name: 'document.pdf', uri: 'mock://file.pdf' })
-    } catch {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'image/*'],
+        copyToCacheDirectory: true,
+        multiple: false,
+      })
+
+      if (result.canceled) return
+
+      const file = result.assets?.[0]
+      if (!file) throw new Error('No file selected')
+
+      setStatus(STATUS.UPLOADING)
+      Animated.timing(progressAnim, {
+        toValue: 1,
+        duration: 450,
+        useNativeDriver: false,
+      }).start(() => {
+        setFileName(file.name ?? 'Selected document')
+        setStatus(STATUS.DONE)
+        onUpload?.({
+          uri: file.uri,
+          name: file.name,
+          fileName: file.name,
+          mimeType: file.mimeType,
+          size: file.size,
+        })
+      })
+    } catch (error) {
+      const message = error.message ?? 'Could not open document picker'
       setStatus(STATUS.ERROR)
+      setErrorMessage(message)
       progressAnim.setValue(0)
+      onUpload?.({ error: message })
     }
   }
 
   const handleRemove = () => {
     setStatus(STATUS.IDLE)
     setFileName(null)
-    setProgress(0)
+    setErrorMessage(null)
     progressAnim.setValue(0)
     onUpload?.(null)
   }
@@ -131,9 +147,14 @@ export function UploadBox({ label, description, accept = 'PDF / Image', onUpload
               <Text style={{ ...t.typography.caption, color: t.brand.teal }}>Uploading...</Text>
             ) : (
               <Text style={{ ...t.typography.caption, color: t.text.muted }}>
-                {description ?? `Tap to upload · ${accept}`}
+                {description ?? `Tap to upload - ${accept}`}
               </Text>
             )}
+            {status === STATUS.ERROR && errorMessage ? (
+              <Text style={{ ...t.typography.caption, color: t.semantic.error, marginTop: 4 }}>
+                {errorMessage}
+              </Text>
+            ) : null}
           </View>
 
           {/* Remove button */}

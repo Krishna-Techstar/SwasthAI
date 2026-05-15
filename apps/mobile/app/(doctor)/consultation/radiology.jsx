@@ -14,10 +14,11 @@ import { SHAPExplainability } from '../../../components/consultation/SHAPExplain
 
 export default function RadiologyScreen() {
   const [activeView, setActiveView] = useState('upload') // upload | results | shap
+  const [uploadError, setUploadError] = useState(null)
   const patient = useConsultationStore((s) => s.patient)
+  const consultationId = useConsultationStore((s) => s.sessionId)
 
   const uploads = useRadiologyStore((s) => s.uploads)
-  const addUpload = useRadiologyStore((s) => s.addUpload)
   const removeUpload = useRadiologyStore((s) => s.removeUpload)
   const results = useRadiologyStore((s) => s.analysisResults)
   const setResults = useRadiologyStore((s) => s.setAnalysisResults)
@@ -28,22 +29,31 @@ export default function RadiologyScreen() {
 
   const handlePickImage = useCallback((scanType) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    // Simulate image pick
-    addUpload({ uri: 'mock://scan.png', fileName: `${scanType}_scan_${Date.now()}.png`, scanType, fileSize: 2400000 })
-  }, [addUpload])
+    setUploadError(`Real ${scanType.toUpperCase()} upload requires a signed file upload result. Unsigned local scans are disabled.`)
+  }, [])
 
   const handleAnalyze = useCallback(async () => {
     setAnalyzing(true, 0)
     try {
-      const res = await aiService.analyzeImage('mock://scan.png', 'xray')
+      const upload = uploads.find((item) => item.fileId)
+      if (!upload) {
+        throw new Error('No registered fileId found for radiology analysis')
+      }
+      const res = await aiService.analyzeImage({
+        fileId: upload.fileId,
+        patientProfileId: patient?.id ?? patient?.patientProfileId,
+        consultationId,
+        scanType: upload.scanType,
+        bodyRegion: upload.bodyRegion,
+      })
       setResults(res)
-      const shapRes = await aiService.getSHAPExplanation('pred_001')
-      setSHAP(shapRes)
+      setSHAP(null)
       setActiveView('results')
     } catch (e) {
-      // handle error
+      setUploadError(e.message)
+      setAnalyzing(false, 0)
     }
-  }, [setAnalyzing, setResults, setSHAP])
+  }, [consultationId, patient?.id, patient?.patientProfileId, setAnalyzing, setResults, setSHAP, uploads])
 
   const VIEWS = [
     { id: 'upload', label: 'Upload', icon: 'cloud-upload-outline' },
@@ -95,6 +105,7 @@ export default function RadiologyScreen() {
               onRemoveUpload={removeUpload}
               onAnalyze={handleAnalyze}
               isAnalyzing={isAnalyzing}
+              error={uploadError}
             />
           </ScrollView>
         ) : activeView === 'results' ? (

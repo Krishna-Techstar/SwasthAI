@@ -55,6 +55,7 @@ export const ADMIN_ROLES = {
 };
 
 export const ROLE_PERMISSIONS = {
+  ADMIN: ["*"],
   "Super Admin": ["*"],
   "Hospital Admin": [
     "dashboard",
@@ -72,16 +73,16 @@ export const ROLE_PERMISSIONS = {
 
 export const SIDEBAR_NAV = [
   { id: "dashboard", label: "Dashboard", icon: "LayoutDashboard", path: "/dashboard", badge: 0 },
-  { id: "doctors", label: "Doctors", icon: "Stethoscope", path: "/doctors", badge: 3 },
+  { id: "doctors", label: "Doctors", icon: "Stethoscope", path: "/doctors", badge: 0 },
   { id: "nurses", label: "Nurses", icon: "Heart", path: "/nurses", badge: 0 },
   { id: "patients", label: "Patients", icon: "Users", path: "/patients", badge: 0 },
-  { id: "ai-diagnostics", label: "AI Diagnostics", icon: "Brain", path: "/ai-diagnostics", badge: 12 },
+  { id: "ai-diagnostics", label: "AI Diagnostics", icon: "Brain", path: "/ai-diagnostics", badge: 0 },
   { id: "appointments", label: "Appointments", icon: "Calendar", path: "/appointments", badge: 0 },
   { id: "billing", label: "Billing", icon: "CreditCard", path: "/billing", badge: 0 },
   { id: "analytics", label: "Analytics", icon: "BarChart3", path: "/analytics", badge: 0 },
-  { id: "verification", label: "Verification Queue", icon: "ShieldCheck", path: "/verification", badge: 5 },
-  { id: "notifications", label: "Notifications", icon: "Bell", path: "/notifications", badge: 8 },
-  { id: "support", label: "Support", icon: "MessageSquare", path: "/support", badge: 2 },
+  { id: "verification", label: "Verification Queue", icon: "ShieldCheck", path: "/verification", badge: 0 },
+  { id: "notifications", label: "Notifications", icon: "Bell", path: "/notifications", badge: 0 },
+  { id: "support", label: "Support", icon: "MessageSquare", path: "/support", badge: 0 },
   { id: "audit-logs", label: "Audit Logs", icon: "ScrollText", path: "/audit-logs", badge: 0 },
   { id: "settings", label: "Settings", icon: "Settings", path: "/settings", badge: 0 },
 ];

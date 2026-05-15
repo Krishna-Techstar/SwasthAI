@@ -8,7 +8,13 @@
     "lint": "turbo run lint"
   },
   "devDependencies": {
+    "prisma": "^6.19.3",
     "turbo": "latest"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "dependencies": {
+    "@expo/ngrok": "^4.0.0",
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3"
+  }
 }

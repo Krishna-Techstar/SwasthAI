@@ -3,20 +3,39 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, Command, LogOut, Search, Settings, User } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useAdminStore } from "@/store/admin-store";
+import { adminDataApi } from "@/lib/admin-api";
+import { adminQueryKeys } from "@/lib/query-client";
 import { cn } from "@/lib/utils";
 
 export function Header() {
-  const { user, sidebarCollapsed } = useAdminStore();
+  const router = useRouter();
+  const { user, sidebarCollapsed, logout: storeLogout } = useAdminStore();
   const [showSearch, setShowSearch] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const notifications = [
-    { id: "1", text: "Dr. Mehta verification pending", time: "2m ago", type: "warning" },
-    { id: "2", text: "AI flagged critical scan - ID #4891", time: "8m ago", type: "error" },
-    { id: "3", text: "Revenue milestone: INR 10L this month", time: "1h ago", type: "success" },
-  ];
+  // Live notifications from the API.
+  const notificationsQuery = useQuery({
+    queryKey: adminQueryKeys.notifications({}),
+    queryFn: () => adminDataApi.notifications({ limit: 5 }),
+    refetchInterval: 30_000,
+  });
+
+  const notifications = notificationsQuery.data?.items ?? [];
+  const unreadCount = notificationsQuery.data?.unreadCount ?? 0;
+
+  async function handleLogout() {
+    try {
+      await adminDataApi.logout();
+    } catch {
+      // Ignore logout API errors
+    }
+    storeLogout();
+    router.replace("/login");
+  }
 
   return (
     <header
@@ -52,9 +71,11 @@ export function Header() {
               className="relative w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center hover:border-border-active hover:bg-brand-dim transition-colors"
             >
               <Bell className="w-4 h-4 text-txt-secondary" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-error text-[9px] text-white-text flex items-center justify-center font-bold">
-                3
-              </span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-error text-[9px] text-white-text flex items-center justify-center font-bold">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </button>
 
             <AnimatePresence>
@@ -65,15 +86,25 @@ export function Header() {
                   exit={{ opacity: 0, y: 8, scale: 0.95 }}
                   className="absolute right-0 top-full mt-2 w-80 bg-surface border border-border rounded-xl shadow-[0_18px_45px_rgba(15,23,42,0.05)] overflow-hidden z-50"
                 >
-                  <div className="px-4 py-3 border-b border-border">
+                  <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-txt-primary">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <span className="text-[10px] font-semibold text-brand bg-brand-dim rounded-full px-2 py-0.5">{unreadCount} unread</span>
+                    )}
                   </div>
-                  {notifications.map((notification) => (
-                    <div key={notification.id} className="px-4 py-3 border-b border-border hover:bg-card-hover cursor-pointer transition-colors">
-                      <p className="text-[13px] text-txt-primary">{notification.text}</p>
-                      <p className="text-[11px] text-txt-muted mt-1">{notification.time}</p>
+                  {notifications.length > 0 ? (
+                    notifications.map((notification) => (
+                      <div key={notification.id} className="px-4 py-3 border-b border-border hover:bg-card-hover cursor-pointer transition-colors">
+                        <p className="text-[13px] text-txt-primary font-medium">{notification.title}</p>
+                        <p className="text-[12px] text-txt-secondary mt-0.5 line-clamp-1">{notification.body}</p>
+                        <p className="text-[11px] text-txt-muted mt-1">{formatTime(notification.createdAt)}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-6 text-center text-xs text-txt-muted">
+                      {notificationsQuery.isLoading ? "Loading notifications..." : "No notifications yet"}
                     </div>
-                  ))}
+                  )}
                   <button className="w-full px-4 py-2.5 text-xs text-brand font-medium hover:bg-card-hover transition-colors">
                     View All Notifications
                   </button>
@@ -91,11 +122,13 @@ export function Header() {
               className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-brand-dim transition-colors"
             >
               <div className="w-8 h-8 rounded-lg bg-purple-dim border border-border flex items-center justify-center">
-                <span className="text-xs font-bold text-purple">DA</span>
+                <span className="text-xs font-bold text-purple">
+                  {(user?.fullName ?? user?.name ?? "AD").slice(0, 2).toUpperCase()}
+                </span>
               </div>
               {!sidebarCollapsed && (
                 <div className="text-left hidden lg:block">
-                  <p className="text-[13px] font-medium text-txt-primary leading-none">{user?.name}</p>
+                  <p className="text-[13px] font-medium text-txt-primary leading-none">{user?.fullName ?? user?.name}</p>
                   <p className="text-[10px] text-txt-muted mt-0.5">{user?.role}</p>
                 </div>
               )}
@@ -110,12 +143,13 @@ export function Header() {
                   className="absolute right-0 top-full mt-2 w-52 bg-surface border border-border rounded-xl shadow-[0_18px_45px_rgba(15,23,42,0.05)] overflow-hidden z-50"
                 >
                   {[
-                    { icon: User, label: "Profile" },
-                    { icon: Settings, label: "Settings" },
-                    { icon: LogOut, label: "Logout", danger: true },
+                    { icon: User, label: "Profile", onClick: () => {} },
+                    { icon: Settings, label: "Settings", onClick: () => {} },
+                    { icon: LogOut, label: "Logout", danger: true, onClick: handleLogout },
                   ].map((item) => (
                     <button
                       key={item.label}
+                      onClick={item.onClick}
                       className={cn(
                         "flex items-center gap-3 w-full px-4 py-2.5 text-[13px] transition-colors",
                         item.danger ? "text-error hover:bg-error-dim" : "text-txt-secondary hover:bg-card-hover hover:text-txt-primary"
@@ -158,4 +192,13 @@ export function Header() {
       </AnimatePresence>
     </header>
   );
+}
+
+function formatTime(value) {
+  if (!value) return "";
+  const diff = Date.now() - new Date(value).getTime();
+  if (diff < 60_000) return "Just now";
+  if (diff < 3600_000) return `${Math.floor(diff / 60_000)}m ago`;
+  if (diff < 86400_000) return `${Math.floor(diff / 3600_000)}h ago`;
+  return new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short" }).format(new Date(value));
 }
